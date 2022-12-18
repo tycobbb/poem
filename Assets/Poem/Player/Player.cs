@@ -41,7 +41,7 @@ class Player: MonoBehaviour {
     void Update() {
         // cast for a phrase
         var hits = Physics.RaycastNonAlloc(
-            m_Sense.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)),
+            SenseRay(),
             m_Hits,
             m_SenseDist,
             s_PoemMask,
@@ -96,14 +96,19 @@ class Player: MonoBehaviour {
         m_Poetry.text = text;
     }
 
+    // -- queries --
+    /// the ray for the sense cast
+    Ray SenseRay() {
+        return m_Sense.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+    }
+
     // -- debug --
     #if UNITY_EDITOR
     /// -- d/gizmos
     void OnDrawGizmos() {
-        var look = m_Sense.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-
-        var src = look.origin;
-        var dst = look.GetPoint(2f);
+        var ray = SenseRay();
+        var src = ray.origin;
+        var dst = ray.GetPoint(2f);
 
         Gizmos.color = Color.magenta;
         Gizmos.DrawSphere(src, 0.1f);
