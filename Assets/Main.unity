@@ -1698,8 +1698,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5e1600d5e8d344bcbfa541e7fb5600e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Look: {fileID: 1565503408}
-  m_Poem: {fileID: 786946762}
+  m_SenseDist: 10
+  m_WrapDist: 50
+  m_Poetry: {fileID: 786946762}
+  m_Sense: {fileID: 1565503408}
 --- !u!1001 &1048648941123494600
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1774,11 +1776,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2888753074602234830, guid: b62d94fcef2ae4173874317329b8c30d, type: 3}
       propertyPath: m_LocalScale.x
-      value: 10
+      value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 2888753074602234830, guid: b62d94fcef2ae4173874317329b8c30d, type: 3}
       propertyPath: m_LocalScale.z
-      value: 20
+      value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 2888753074602234830, guid: b62d94fcef2ae4173874317329b8c30d, type: 3}
       propertyPath: m_LocalPosition.x

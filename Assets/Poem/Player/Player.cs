@@ -8,13 +8,24 @@ class Player: MonoBehaviour {
     /// .
     static int s_PoemMask = -1;
 
+
+    // -- tuning --
+    [Header("tuning")]
+    [Tooltip("the distance the player can sense")]
+    [SerializeField] float m_SenseDist;
+
+    // -- cfg --
+    [Header("cfg")]
+    [Tooltip("the distance the player wraps at")]
+    [SerializeField] float m_WrapDist;
+
     // -- refs --
     [Header("refs")]
-    [Tooltip("the player camera")]
-    [SerializeField] Camera m_Look;
-
     [Tooltip("the player's sense of the poerty")]
-    [SerializeField] TMP_Text m_Poem;
+    [SerializeField] TMP_Text m_Poetry;
+
+    [Tooltip("the player camera")]
+    [SerializeField] Camera m_Sense;
 
     // -- props --
     /// a buffer of hit phrases
@@ -30,9 +41,9 @@ class Player: MonoBehaviour {
     void Update() {
         // cast for a phrase
         var hits = Physics.RaycastNonAlloc(
-            m_Look.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)),
+            m_Sense.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)),
             m_Hits,
-            float.MaxValue,
+            m_SenseDist,
             s_PoemMask,
             QueryTriggerInteraction.Ignore
         );
@@ -55,6 +66,25 @@ class Player: MonoBehaviour {
         Read(phrase);
     }
 
+    void FixedUpdate() {
+        var t = transform;
+
+        // wrap around the world
+        var pos = t.position;
+
+        var dx = Mathf.Abs(pos.x) - m_WrapDist;
+        if (dx > 0f) {
+            pos.x = -Mathf.Sign(pos.x) * (m_WrapDist - dx);
+        }
+
+        var dz = Mathf.Abs(pos.z) - m_WrapDist;
+        if (dz > 0f) {
+            pos.z = -Mathf.Sign(pos.z) * (m_WrapDist - dz);
+        }
+
+        t.position = pos;
+    }
+
     // -- commands --
     /// read the phrase
     void Read(Phrase phrase) {
@@ -63,14 +93,14 @@ class Player: MonoBehaviour {
             text = phrase.Text;
         }
 
-        m_Poem.text = text;
+        m_Poetry.text = text;
     }
 
     // -- debug --
     #if UNITY_EDITOR
     /// -- d/gizmos
     void OnDrawGizmos() {
-        var look = m_Look.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        var look = m_Sense.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
         var src = look.origin;
         var dst = look.GetPoint(2f);
