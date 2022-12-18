@@ -10,15 +10,15 @@ class Player: MonoBehaviour {
 
     // -- refs --
     [Header("refs")]
-    [Tooltip("the direction the player is looking")]
-    [SerializeField] Transform m_Look;
+    [Tooltip("the player camera")]
+    [SerializeField] Camera m_Look;
 
     [Tooltip("the player's sense of the poerty")]
     [SerializeField] TMP_Text m_Poem;
 
     // -- props --
-    /// the hit phrase
-    RaycastHit[] m_Hits = new RaycastHit[1];
+    /// a buffer of hit phrases
+    RaycastHit[] m_Hits = new RaycastHit[10];
 
     // -- lifecycle --
     void Awake() {
@@ -28,22 +28,30 @@ class Player: MonoBehaviour {
     }
 
     void Update() {
-        // find the phrase
+        // cast for a phrase
         var hits = Physics.RaycastNonAlloc(
-            transform.position,
-            m_Look.forward,
+            m_Look.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)),
             m_Hits,
             float.MaxValue,
             s_PoemMask,
             QueryTriggerInteraction.Ignore
         );
 
-        // and read the phrase
+        // find the closest one
         var phrase = null as Phrase;
         if (hits > 0) {
-            phrase = m_Hits[0].transform.GetComponent<Phrase>();
+            var closest = m_Hits[0];
+            for (var i = 0; i < hits; i++) {
+                var hit = m_Hits[i];
+                if (hit.distance < closest.distance) {
+                    closest = hit;
+                }
+            }
+
+            phrase = closest.collider.GetComponent<Phrase>();
         }
 
+        // and read it
         Read(phrase);
     }
 
@@ -57,6 +65,24 @@ class Player: MonoBehaviour {
 
         m_Poem.text = text;
     }
+
+    // -- debug --
+    #if UNITY_EDITOR
+    /// -- d/gizmos
+    void OnDrawGizmos() {
+        var look = m_Look.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+
+        var src = look.origin;
+        var dst = look.GetPoint(2f);
+
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawSphere(src, 0.1f);
+        Gizmos.DrawLine(src, dst);
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(dst, 0.1f);
+    }
+    #endif
 }
 
 }
