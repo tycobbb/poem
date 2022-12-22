@@ -3,11 +3,11 @@ using UnityEngine;
 
 namespace Poem {
 
+/// .
 class Player: MonoBehaviour {
     // -- statics --
     /// .
     static int s_PoemMask = -1;
-
 
     // -- tuning --
     [Header("tuning")]
@@ -21,26 +21,32 @@ class Player: MonoBehaviour {
 
     // -- refs --
     [Header("refs")]
-    [Tooltip("the player's sense of the poerty")]
-    [SerializeField] TMP_Text m_Poetry;
+    [Tooltip("the sensed output")]
+    [SerializeField] Sensed m_Sensed;
 
-    [Tooltip("the player camera")]
-    [SerializeField] Camera m_Sense;
+    [Tooltip("the camera")]
+    [SerializeField] Camera m_Sensor;
+
+    [Tooltip("the config")]
+    [SerializeField] Config m_Config;
 
     // -- props --
     /// a buffer of hit phrases
-    RaycastHit[] m_Hits = new RaycastHit[10];
+    RaycastHit[] m_Hits;
 
     // -- lifecycle --
     void Awake() {
         if (s_PoemMask == -1) {
             s_PoemMask = LayerMask.GetMask("Poem");
         }
+
+        // set props
+        m_Hits = new RaycastHit[m_Config.Phrases];
     }
 
     void Update() {
-        // cast for a phrase
-        var hits = Physics.RaycastNonAlloc(
+        // cast for phrases
+        var count = Physics.RaycastNonAlloc(
             SenseRay(),
             m_Hits,
             m_SenseDist,
@@ -48,22 +54,8 @@ class Player: MonoBehaviour {
             QueryTriggerInteraction.Ignore
         );
 
-        // find the closest one
-        var phrase = null as Phrase;
-        if (hits > 0) {
-            var closest = m_Hits[0];
-            for (var i = 0; i < hits; i++) {
-                var hit = m_Hits[i];
-                if (hit.distance < closest.distance) {
-                    closest = hit;
-                }
-            }
-
-            phrase = closest.collider.GetComponent<Phrase>();
-        }
-
-        // and read it
-        Read(phrase);
+        // and show them
+        m_Sensed.Accept(m_Hits, count);
     }
 
     void FixedUpdate() {
@@ -85,21 +77,10 @@ class Player: MonoBehaviour {
         t.position = pos;
     }
 
-    // -- commands --
-    /// read the phrase
-    void Read(Phrase phrase) {
-        var text = "poem";
-        if (phrase != null) {
-            text = phrase.Text;
-        }
-
-        m_Poetry.text = text;
-    }
-
     // -- queries --
     /// the ray for the sense cast
     Ray SenseRay() {
-        return m_Sense.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        return m_Sensor.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
     }
 
     // -- debug --
