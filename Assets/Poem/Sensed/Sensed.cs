@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Poem {
@@ -40,6 +42,10 @@ class Sensed: MonoBehaviour {
     // -- commands --
     /// show the first n phrases from the hits
     public void Accept(RaycastHit[] hits, int count) {
+        // sort hits by distance
+        Array.Sort<RaycastHit>(hits, 0, count, new CompareByDistance());
+
+        // sense the phrases
         for (var i = 0 ; i < m_Phrases.Length; i++) {
             var sensed = m_Phrases[i];
             if (i >= count) {
@@ -48,6 +54,14 @@ class Sensed: MonoBehaviour {
                 var phrase = hits[i].collider.GetComponent<Phrase>();
                 sensed.Accept(phrase);
             }
+        }
+    }
+
+    // -- helpers --
+    /// .
+    struct CompareByDistance: IComparer<RaycastHit> {
+        int IComparer<RaycastHit>.Compare(RaycastHit l, RaycastHit r) {
+            return l.distance.CompareTo(r.distance);
         }
     }
 }
