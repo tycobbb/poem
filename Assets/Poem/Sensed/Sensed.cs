@@ -49,10 +49,11 @@ class Sensed: MonoBehaviour {
         for (var i = 0 ; i < m_Phrases.Length; i++) {
             var sensed = m_Phrases[i];
             if (i >= count) {
-                sensed.Accept(null);
+                sensed.Accept(null, 0.0f);
             } else {
-                var phrase = hits[i].collider.GetComponent<Phrase>();
-                sensed.Accept(phrase);
+                var hit = hits[i];
+                var phrase = hit.collider.GetComponent<Phrase>();
+                sensed.Accept(phrase, hit.distance);
             }
         }
     }

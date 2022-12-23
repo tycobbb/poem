@@ -59,6 +59,19 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
+  m_Radius:
+    m_Range:
+      Min: 0
+      Max: 200
+    m_Curve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  m_Distance:
+    Min: 0
+    Max: 10
   m_Label: {fileID: 7333891591025709330}
 --- !u!222 &7333891591025709331
 CanvasRenderer:
@@ -88,7 +101,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "poem\t"
+  m_text: poem
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a743f6317554748c9a743f3b4bc9a8bd, type: 2}
   m_sharedMaterial: {fileID: -7688842330310057503, guid: a743f6317554748c9a743f3b4bc9a8bd, type: 2}

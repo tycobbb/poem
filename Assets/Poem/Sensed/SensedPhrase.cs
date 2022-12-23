@@ -17,6 +17,12 @@ class SensedPhrase: MonoBehaviour {
     [Tooltip("the time to print the next character")]
     [SerializeField] EaseTimer m_Print;
 
+    [Tooltip("the radius curve")]
+    [SerializeField] EaseCurve m_Radius;
+
+    [Tooltip("the distance range")]
+    [SerializeField] FloatRange m_Distance;
+
     // -- refs --
     [Header("refs")]
     [Tooltip("the phrase text")]
@@ -24,12 +30,19 @@ class SensedPhrase: MonoBehaviour {
 
     // -- props --
     /// the target string
-    string m_DstLabel;
+    string m_DstText;
+
+    /// the direction of the target label
+    Vector2 m_DstDirection;
 
     /// the current printing state
     PrintingState m_PrintingState = PrintingState.None;
 
     // -- lifecycle --
+    void Awake() {
+        m_Label.text = "";
+    }
+
     void Update() {
         if (m_Print.IsActive) {
             m_Print.Tick();
@@ -42,18 +55,29 @@ class SensedPhrase: MonoBehaviour {
 
     // -- commands --
     /// accept and sense a phrase
-    public void Accept(Phrase phrase) {
+    public void Accept(Phrase phrase, float distance) {
         // if the text is the same, do nothing
         var dst = phrase?.Text ?? "";
-        if (dst == m_DstLabel) {
-            return;
+        if (dst != m_DstText) {
+            Print(dst);
         }
 
-        // otherwise, start printing the phrase
-        m_DstLabel = dst;
+        // move the label unless it's deleting
+        var src = m_Label.text;
+        if (m_PrintingState != PrintingState.Delete && (!src.IsEmpty() || !dst.IsEmpty())) {
+            var radius = m_Radius.Evaluate(m_Distance.Unlerp(distance));
+            Debug.Log($"src: {src} dst: {dst} dist {distance} -> radius: {radius}");
+            m_Label.rectTransform.anchoredPosition = radius * m_DstDirection;
+        }
+    }
+
+    /// start printing the text
+    void Print(string text) {
+        m_DstText = text;
+        m_DstDirection = Random.insideUnitCircle;
 
         // and switch to the initial state
-        switch (m_Label.text.Length, m_DstLabel.Length) {
+        switch (m_Label.text.Length, m_DstText.Length) {
         case (0, 0):
             SwitchToNone(); break;
         case (0, _):
@@ -98,7 +122,7 @@ class SensedPhrase: MonoBehaviour {
         m_Label.text = next;
 
         // switch to the next state once empty
-        switch (next.Length, m_DstLabel.Length) {
+        switch (next.Length, m_DstText.Length) {
         case (0, 0):
             SwitchToNone(); break;
         case (0, _):
@@ -112,7 +136,7 @@ class SensedPhrase: MonoBehaviour {
         m_PrintingState = PrintingState.Write;
 
         // resize the label to fit the new phrase
-        var size = m_Label.GetPreferredValues(m_DstLabel);
+        var size = m_Label.GetPreferredValues(m_DstText);
         m_Label.rectTransform.sizeDelta = size;
     }
 
@@ -120,11 +144,11 @@ class SensedPhrase: MonoBehaviour {
     void WriteOne() {
         // write one character
         var curr = m_Label.text;
-        var next = m_DstLabel.Substring(0, curr.Length + 1);
+        var next = m_DstText.Substring(0, curr.Length + 1);
         m_Label.text = next;
 
         // stop printing once at target
-        if (next == m_DstLabel) {
+        if (next == m_DstText) {
             SwitchToNone();
         }
     }

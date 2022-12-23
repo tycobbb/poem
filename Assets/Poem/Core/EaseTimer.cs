@@ -3,8 +3,9 @@ using UnityEngine;
 
 namespace Poem {
 
+/// a timer w/ a progress curve
 [Serializable]
-sealed class EaseTimer {
+record EaseTimer {
     // -- constants --
     // the sentinel time for an inacitve timer
     const float k_Inactive = -1.0f;
@@ -48,8 +49,6 @@ sealed class EaseTimer {
         }
 
         // check progress
-        // TODO: do unscaled time?
-        // TODO: do negative time?
         var k = (Time.time - m_StartTime) / m_Duration;
 
         // if complete, clamp and stop the timer
@@ -76,7 +75,7 @@ sealed class EaseTimer {
     /// curve an arbitrary progress pct
     public float PctFrom(float value) {
         if (m_Curve == null || m_Curve.length == 0) {
-             return value;
+            return value;
         }
 
         return m_Curve.Evaluate(value);
