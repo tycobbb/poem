@@ -12,6 +12,16 @@ class SensedPhrase: MonoBehaviour {
         Write,
     }
 
+    /// a hit phrase
+    public ref struct Hit {
+        /// .
+        public Phrase Phrase;
+        /// .
+        public float Distance;
+        /// .
+        public Vector3 Direction;
+    }
+
     // -- cfg --
     [Header("cfg")]
     [Tooltip("the time to print the next character")]
@@ -30,7 +40,7 @@ class SensedPhrase: MonoBehaviour {
 
     // -- props --
     /// the target string
-    string m_DstText;
+    string m_DstText = "";
 
     /// the direction of the target label
     Vector2 m_DstDirection;
@@ -54,10 +64,17 @@ class SensedPhrase: MonoBehaviour {
     }
 
     // -- commands --
+    /// clear the phrase
+    public void Clear() {
+        if (!m_DstText.IsEmpty()) {
+            Print("");
+        }
+    }
+
     /// accept and sense a phrase
-    public void Accept(Phrase phrase, float distance) {
+    public void Accept(Hit hit) {
         // if the text is the same, do nothing
-        var dst = phrase?.Text ?? "";
+        var dst = hit.Phrase?.Text ?? "";
         if (dst != m_DstText) {
             Print(dst);
         }
@@ -65,9 +82,8 @@ class SensedPhrase: MonoBehaviour {
         // move the label unless it's deleting
         var src = m_Label.text;
         if (m_PrintingState != PrintingState.Delete && (!src.IsEmpty() || !dst.IsEmpty())) {
-            var radius = m_Radius.Evaluate(m_Distance.Unlerp(distance));
-            Debug.Log($"src: {src} dst: {dst} dist {distance} -> radius: {radius}");
-            m_Label.rectTransform.anchoredPosition = radius * m_DstDirection;
+            var radius = m_Radius.Evaluate(m_Distance.Unlerp(hit.Distance));
+            m_Label.rectTransform.anchoredPosition = radius * hit.Direction;
         }
     }
 

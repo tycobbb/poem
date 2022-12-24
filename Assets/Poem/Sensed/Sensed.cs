@@ -41,20 +41,37 @@ class Sensed: MonoBehaviour {
 
     // -- commands --
     /// show the first n phrases from the hits
-    public void Accept(RaycastHit[] hits, int count) {
+    public void Accept(int count, RaycastHit[] hits, Vector3 src) {
         // sort hits by distance
         Array.Sort<RaycastHit>(hits, 0, count, new CompareByDistance());
+
+        // share storage for the hit
+        var args = new SensedPhrase.Hit();
 
         // sense the phrases
         for (var i = 0 ; i < m_Phrases.Length; i++) {
             var sensed = m_Phrases[i];
             if (i >= count) {
-                sensed.Accept(null, 0.0f);
-            } else {
-                var hit = hits[i];
-                var phrase = hit.collider.GetComponent<Phrase>();
-                sensed.Accept(phrase, hit.distance);
+                sensed.Clear();
+                continue;
             }
+
+            var hit = hits[i];
+            var t = hit.transform;
+
+            // find the phrase
+            args.Phrase = t.GetComponent<Phrase>();
+            if (args.Phrase == null) {
+                Debug.LogError($"[player] hit {t.name} but it had no phrase");
+                continue;
+            }
+
+            // set the hit props
+            args.Distance = hit.distance;
+            args.Direction = Vector3.Normalize(t.position - src);
+
+            // sense the phrase
+            sensed.Accept(args);
         }
     }
 

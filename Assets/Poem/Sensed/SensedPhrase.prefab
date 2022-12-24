@@ -62,7 +62,7 @@ MonoBehaviour:
   m_Radius:
     m_Range:
       Min: 0
-      Max: 200
+      Max: 500
     m_Curve:
       serializedVersion: 2
       m_Curve: []

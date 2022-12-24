@@ -1,4 +1,5 @@
-using TMPro;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Poem {
@@ -31,7 +32,7 @@ class Player: MonoBehaviour {
     [SerializeField] Config m_Config;
 
     // -- props --
-    /// a buffer of hit phrases
+    /// a buffer for phrase raycast hits
     RaycastHit[] m_Hits;
 
     // -- lifecycle --
@@ -45,9 +46,11 @@ class Player: MonoBehaviour {
     }
 
     void Update() {
+        var fwd = SenseRay();
+
         // cast for phrases
         var count = Physics.RaycastNonAlloc(
-            SenseRay(),
+            fwd,
             m_Hits,
             m_SenseDist,
             s_PoemMask,
@@ -55,7 +58,7 @@ class Player: MonoBehaviour {
         );
 
         // and show them
-        m_Sensed.Accept(m_Hits, count);
+        m_Sensed.Accept(count, m_Hits, src: fwd.origin);
     }
 
     void FixedUpdate() {
