@@ -22,10 +22,13 @@ class SensedPhrase: MonoBehaviour {
         public Vector3 Direction;
     }
 
-    // -- cfg --
-    [Header("cfg")]
+    // -- tuning --
+    [Header("tuning")]
     [Tooltip("the time to print the next character")]
     [SerializeField] EaseTimer m_Print;
+
+    [Tooltip("the eased value for a move")]
+    [SerializeField] EaseVec2 m_Move;
 
     [Tooltip("the radius curve")]
     [SerializeField] EaseCurve m_Radius;
@@ -41,9 +44,6 @@ class SensedPhrase: MonoBehaviour {
     // -- props --
     /// the target string
     string m_DstText = "";
-
-    /// the direction of the target label
-    Vector2 m_DstDirection;
 
     /// the current printing state
     PrintingState m_PrintingState = PrintingState.None;
@@ -61,6 +61,11 @@ class SensedPhrase: MonoBehaviour {
                 PrintOne();
             }
         }
+
+        if (m_Move.IsActive) {
+            m_Move.Tick();
+            m_Label.rectTransform.anchoredPosition = m_Move.Current;
+        }
     }
 
     // -- commands --
@@ -74,23 +79,27 @@ class SensedPhrase: MonoBehaviour {
     /// accept and sense a phrase
     public void Accept(Hit hit) {
         // if the text is the same, do nothing
-        var dst = hit.Phrase?.Text ?? "";
-        if (dst != m_DstText) {
-            Print(dst);
+        var dstText = hit.Phrase?.Text ?? "";
+        if (dstText != m_DstText) {
+            Print(dstText);
         }
 
         // move the label unless it's deleting
-        var src = m_Label.text;
-        if (m_PrintingState != PrintingState.Delete && (!src.IsEmpty() || !dst.IsEmpty())) {
-            var radius = m_Radius.Evaluate(m_Distance.Unlerp(hit.Distance));
-            m_Label.rectTransform.anchoredPosition = radius * hit.Direction;
+        var srcText = m_Label.text;
+        if (m_PrintingState != PrintingState.Delete && (!srcText.IsEmpty() || !dstText.IsEmpty())) {
+            var rad = m_Radius.Evaluate(m_Distance.Unlerp(hit.Distance));
+            var dst = rad * new Vector2(hit.Direction.x, hit.Direction.y);
+
+            if (m_Move.Dst != dst) {
+                var src = m_Label.rectTransform.anchoredPosition;
+                m_Move.Start(src, dst);
+            }
         }
     }
 
     /// start printing the text
     void Print(string text) {
         m_DstText = text;
-        m_DstDirection = Random.insideUnitCircle;
 
         // and switch to the initial state
         switch (m_Label.text.Length, m_DstText.Length) {
