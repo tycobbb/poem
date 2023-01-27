@@ -25,6 +25,7 @@ class Sensed: MonoBehaviour {
     void Awake() {
         // create phrases
         m_Phrases = new SensedPhrase[m_Config.Phrases];
+
         for (var i = 0; i < m_Config.Phrases; i++) {
             // set prop
             var phrase = Instantiate(m_PhrasePrefab);
