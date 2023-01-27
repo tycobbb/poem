@@ -18,6 +18,9 @@ class Sensed: MonoBehaviour {
     [SerializeField] Config m_Config;
 
     // -- props --
+    /// the nearest phrase, if any
+    Phrase m_Nearest;
+
     /// the sensed phrase labels
     SensedPhrase[] m_Phrases;
 
@@ -50,6 +53,7 @@ class Sensed: MonoBehaviour {
         var args = new SensedPhrase.Hit();
 
         // sense the phrases
+        m_Nearest = null;
         for (var i = 0 ; i < m_Phrases.Length; i++) {
             var sensed = m_Phrases[i];
             if (i >= count) {
@@ -73,7 +77,33 @@ class Sensed: MonoBehaviour {
 
             // sense the phrase
             sensed.Accept(args);
+
+            // track the nearest phrase
+            if (i == 0) {
+                m_Nearest = args.Phrase;
+            }
         }
+    }
+
+    /// expect the character to appear
+    public void Expect(char ch) {
+        if (m_Nearest == null) {
+            Debug.LogError($"[sensed] there was no phrase to expect");
+            return;
+        }
+
+        m_Nearest.Expect(ch);
+    }
+
+    /// assume the expected text's end
+    public void Assume() {
+        m_Nearest.Assume();
+    }
+
+    // -- queries --
+    /// if there is any sensed phrase
+    public bool Any {
+        get => m_Nearest != null;
     }
 
     // -- helpers --

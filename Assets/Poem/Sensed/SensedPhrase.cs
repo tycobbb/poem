@@ -71,6 +71,7 @@ class SensedPhrase: MonoBehaviour {
     // -- commands --
     /// clear the phrase
     public void Clear() {
+        // if there is anything to clear, clear it
         if (!m_DstText.IsEmpty()) {
             Print("");
         }
@@ -78,8 +79,15 @@ class SensedPhrase: MonoBehaviour {
 
     /// accept and sense a phrase
     public void Accept(Hit hit) {
+        // show the text; print by character if not expecting
+        var dstText = hit.Phrase.Text;
+        if (hit.Phrase.IsExpecting) {
+            Expect(dstText);
+        } else if (dstText != m_DstText) {
+            Print(dstText);
+        }
+
         // if the text is the same, do nothing
-        var dstText = hit.Phrase?.Text ?? "";
         if (dstText != m_DstText) {
             Print(dstText);
         }
@@ -87,16 +95,28 @@ class SensedPhrase: MonoBehaviour {
         // move the label unless it's deleting
         var srcText = m_Label.text;
         if (m_PrintingState != PrintingState.Delete && (!srcText.IsEmpty() || !dstText.IsEmpty())) {
-            var rad = m_Radius.Evaluate(m_Distance.Unlerp(hit.Distance));
-            var dst = rad * new Vector2(hit.Direction.x, hit.Direction.y);
-
-            if (m_Move.Dst != dst) {
-                var src = m_Label.rectTransform.anchoredPosition;
-                m_Move.Start(src, dst);
-            }
+            Move(hit);
         }
     }
 
+    /// expect the text to appear
+    void Expect(string text) {
+        m_DstText = text;
+        m_Label.text = text;
+    }
+
+    /// move the label into position
+    void Move(Hit hit) {
+        var rad = m_Radius.Evaluate(m_Distance.Unlerp(hit.Distance));
+        var dst = rad * new Vector2(hit.Direction.x, hit.Direction.y);
+
+        if (m_Move.Dst != dst) {
+            var src = m_Label.rectTransform.anchoredPosition;
+            m_Move.Start(src, dst);
+        }
+    }
+
+    // -- c/print
     /// start printing the text
     void Print(string text) {
         m_DstText = text;

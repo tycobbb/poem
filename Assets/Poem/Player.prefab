@@ -606,7 +606,7 @@ GameObject:
   - component: {fileID: 3865670260837474843}
   - component: {fileID: 3865670260837474841}
   - component: {fileID: 3865670260837474840}
-  - component: {fileID: 3865670260837474919}
+  - component: {fileID: 2268608988974706262}
   m_Layer: 1
   m_Name: Player
   m_TagString: Player
@@ -648,6 +648,8 @@ MonoBehaviour:
   m_WrapDist: 50
   m_Sensed: {fileID: 0}
   m_Sensor: {fileID: 3865670260347653736}
+  m_Input: {fileID: -944628639613478452, guid: 7597c97eb35b94c0088945a30a814488, type: 3}
+  m_Write: {fileID: -8079992480062678355, guid: 7597c97eb35b94c0088945a30a814488, type: 3}
   m_Config: {fileID: 11400000, guid: 1cc11347e9ece4411a9f675b3264352f, type: 2}
 --- !u!143 &3865670260837474841
 CharacterController:
@@ -995,7 +997,7 @@ MonoBehaviour:
     jumpSource: {fileID: 3865670260120481360}
     landSource: {fileID: 3865670260120481374}
   controller: {fileID: 3865670260837474841}
---- !u!114 &3865670260837474919
+--- !u!114 &2268608988974706262
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1004,45 +1006,25 @@ MonoBehaviour:
   m_GameObject: {fileID: 3865670260837474918}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 10fbdadb3552da541b69779cfadf70ae, type: 3}
+  m_Script: {fileID: 11500000, guid: a2fb832ec185ffc4481590e0f1a3b8de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  useKeyCodes: 1
+  playerInput: {fileID: 0}
+  inputAsset: {fileID: -944628639613478452, guid: 7597c97eb35b94c0088945a30a814488, type: 3}
+  actions:
+  - actionName: Look
+    action: {fileID: 6940538419726410420, guid: 7597c97eb35b94c0088945a30a814488, type: 3}
+  - actionName: Move
+    action: {fileID: -1246895598473198080, guid: 7597c97eb35b94c0088945a30a814488, type: 3}
+  - actionName: Zoom
+    action: {fileID: 8804498153281155251, guid: 7597c97eb35b94c0088945a30a814488, type: 3}
+  - actionName: Jump
+    action: {fileID: 335763634227698153, guid: 7597c97eb35b94c0088945a30a814488, type: 3}
+  - actionName: Run
+    action: {fileID: 5190739044734946418, guid: 7597c97eb35b94c0088945a30a814488, type: 3}
+  - actionName: Crouch
+    action: {fileID: 5064262545289094806, guid: 7597c97eb35b94c0088945a30a814488, type: 3}
+  - actionName: Interact
+    action: {fileID: -5548793354506133487, guid: 7597c97eb35b94c0088945a30a814488, type: 3}
   autoEnableInput: 1
   autoDisableInput: 1
-  inputs:
-  - buttonName: Move
-    type: 2
-    inputName: Horizontal
-    inputNameSecondary: Vertical
-    key: 0
-  - buttonName: Look
-    type: 2
-    inputName: Mouse X
-    inputNameSecondary: Mouse Y
-    key: 0
-  - buttonName: Zoom
-    type: 0
-    inputName: Zoom
-    inputNameSecondary: 
-    key: 122
-  - buttonName: Jump
-    type: 0
-    inputName: Jump
-    inputNameSecondary: 
-    key: 32
-  - buttonName: Crouch
-    type: 0
-    inputName: Crouch
-    inputNameSecondary: 
-    key: 99
-  - buttonName: Run
-    type: 0
-    inputName: Run
-    inputNameSecondary: 
-    key: 304
-  - buttonName: Interact
-    type: 0
-    inputName: Interact
-    inputNameSecondary: 
-    key: 101

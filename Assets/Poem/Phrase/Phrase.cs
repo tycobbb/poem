@@ -18,10 +18,30 @@ class Phrase: MonoBehaviour {
     [Tooltip("the persistent store")]
     [SerializeField] Store m_Store;
 
+    // -- props --
+    /// the edited text, if any
+    string m_Expected;
+
     // -- lifecycle --
     void Awake() {
         // bind events
         m_Store.OnLoad(OnStoreLoad);
+    }
+
+    // -- commands --
+    /// expect the character to appear
+    public void Expect(char ch) {
+        if (m_Expected == null) {
+            m_Expected = "";
+        }
+
+        m_Expected += ch;
+    }
+
+    /// assume the expected text's end
+    public void Assume() {
+        m_Text = m_Expected;
+        m_Expected = null;
     }
 
     // -- queries --
@@ -32,7 +52,12 @@ class Phrase: MonoBehaviour {
 
     /// .
     public string Text {
-        get => m_Text;
+        get => m_Expected ?? m_Text;
+    }
+
+    /// if the phrase is expecting new text
+    public bool IsExpecting {
+        get => m_Expected != null;
     }
 
     // -- events --

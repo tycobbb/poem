@@ -1,4 +1,6 @@
+using Hertzole.GoldPlayer;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Poem {
 
@@ -26,12 +28,24 @@ class Player: MonoBehaviour {
     [Tooltip("the camera")]
     [SerializeField] Camera m_Sensor;
 
+    [Tooltip("the input actions")]
+    [SerializeField] InputActionAsset m_Input;
+
+    [Tooltip("the write action ref")]
+    [SerializeField] InputActionReference m_Write;
+
     [Tooltip("the config")]
     [SerializeField] Config m_Config;
 
     // -- props --
     /// a buffer for phrase raycast hits
     RaycastHit[] m_Hits;
+
+    /// the movement action amap
+    InputActionMap m_Movement;
+
+    /// .
+    Keyboard m_Keyboard;
 
     // -- lifecycle --
     void Awake() {
@@ -41,6 +55,12 @@ class Player: MonoBehaviour {
 
         // set props
         m_Hits = new RaycastHit[m_Config.Phrases];
+        m_Keyboard = Keyboard.current;
+        m_Movement = m_Input.FindActionMap("Player", true);
+
+        // bind events
+        m_Write.action.actionMap.Enable();
+        m_Write.action.performed += OnWrite;
     }
 
     void Update() {
@@ -78,10 +98,53 @@ class Player: MonoBehaviour {
         t.position = pos;
     }
 
+    // -- commands --
+    /// .
+    void StartWriting() {
+        m_Movement.Disable();
+        m_Keyboard.onTextInput += OnTextInput;
+    }
+
+    /// .
+    void Write(char ch) {
+        m_Sensed.Expect(ch);
+    }
+
+    /// .
+    void StopWriting() {
+        m_Movement.Enable();
+        m_Keyboard.onTextInput -= OnTextInput;
+        m_Sensed.Assume();
+    }
+
     // -- queries --
     /// the ray for the sense cast
     Ray SenseRay() {
         return m_Sensor.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+    }
+
+    /// .
+    bool IsWriting {
+        get => !m_Movement.enabled;
+    }
+
+    // -- events --
+    /// when the write input fires
+    void OnWrite(InputAction.CallbackContext action) {
+        if (!m_Sensed.Any) {
+            return;
+        }
+
+        if (IsWriting) {
+            StopWriting();
+        } else {
+            StartWriting();
+        }
+    }
+
+    /// when the keyboard input fires
+    void OnTextInput(char ch) {
+        Write(ch);
     }
 
     // -- debug --
