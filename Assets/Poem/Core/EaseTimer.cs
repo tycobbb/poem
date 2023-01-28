@@ -8,7 +8,7 @@ namespace Poem {
 record EaseTimer {
     // -- constants --
     // the sentinel time for an inacitve timer
-    const float k_Inactive = -1.0f;
+    const float k_Inactive = -1f;
 
     // -- cfg --
     [Tooltip("the timer duration")]
@@ -18,43 +18,46 @@ record EaseTimer {
     [SerializeField] AnimationCurve m_Curve;
 
     // -- props --
-    /// when the timer started
-    float m_StartTime;
+    /// the elapsed time
+    float m_Elapsed;
 
     /// the uncurved percent through the timer
     float m_RawPct;
 
     // -- lifetime --
-    public EaseTimer(): this(0.0f) {}
+    public EaseTimer(): this(0f) {}
     public EaseTimer(
         float duration,
         AnimationCurve curve = null
     ) {
-        m_StartTime = k_Inactive;
+        m_Elapsed = k_Inactive;
         m_Duration = duration;
         m_Curve = curve;
     }
 
     // -- commands --
     /// start the timer (optionally, at a particular raw percent)
-    public void Start(float pct = 0.0f) {
-        m_StartTime = Time.time + pct * m_Duration;
+    public void Start(float pct = 0f) {
+        m_Elapsed = pct * m_Duration;
     }
 
     /// advance the timer based on current time
     public void Tick() {
         // if not active, abort
-        if (m_StartTime == k_Inactive) {
+        if (m_Elapsed == k_Inactive) {
             return;
         }
 
+        // tick timer
+        m_Elapsed += Time.deltaTime;
+
         // check progress
-        var k = (Time.time - m_StartTime) / m_Duration;
+        var k = m_Elapsed / m_Duration;
 
         // if complete, clamp and stop the timer
-        if (k >= 1.0f) {
-            k = 1.0f;
-            m_StartTime = k_Inactive;
+        if (k >= 1f) {
+            k = 1f;
+            m_Elapsed = k_Inactive;
         }
 
         // save current progress
@@ -64,7 +67,7 @@ record EaseTimer {
     // -- queries --
     /// if the timer is active
     public bool IsActive {
-        get => m_StartTime != k_Inactive;
+        get => m_Elapsed != k_Inactive;
     }
 
     /// the curved progress

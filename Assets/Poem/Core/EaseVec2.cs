@@ -19,10 +19,10 @@ struct EaseVec2 {
 
     // -- lifetime --
     /// start the timer (optionally, at a particular raw percent)
-    public void Start(Vector2 src, Vector2 dst, float pct = 0.0f) {
+    public void Start(Vector2 src, Vector2 dst, float pct = 0f) {
         m_Src = src;
         m_Dst = dst;
-        m_Timer.Start();
+        m_Timer.Start(pct);
     }
 
     /// advance the timer based on current time
@@ -37,13 +37,13 @@ struct EaseVec2 {
     }
 
     /// .
-    public Vector2 Current {
-        get => Vector2.Lerp(m_Src, m_Dst, m_Timer.Pct);
+    public Vector2 Dst {
+        get => m_Dst;
     }
 
     /// .
-    public Vector2 Dst {
-        get => m_Dst;
+    public Vector2 Current {
+        get => Vector2.Lerp(m_Src, m_Dst, m_Timer.Pct);
     }
 }
 

@@ -48,11 +48,14 @@ class SensedPhrase: MonoBehaviour {
     /// the current printing state
     PrintingState m_PrintingState = PrintingState.None;
 
+    /// the accepted phrase
+    Phrase m_Accepted;
+
     /// if this is accepting a phrase
     bool m_IsAccepting = false;
 
-    /// the accepted phrase
-    Phrase m_Accepted;
+    /// the pct to start the next move from
+    float m_NextMovePct = 0f;
 
     // -- lifecycle --
     void Awake() {
@@ -87,7 +90,6 @@ class SensedPhrase: MonoBehaviour {
         // accept link if changed
         var accepted = hit.Phrase;
         if (accepted != m_Accepted) {
-            Debug.Log($"[sensed] link {accepted} to {this}");
             m_Accepted = hit.Phrase;
             m_Accepted.Accept(this);
         }
@@ -128,6 +130,7 @@ class SensedPhrase: MonoBehaviour {
 
     /// expect the text to appear
     void Expect(string text) {
+        SwitchTo(PrintingState.None);
         m_DstText = text;
         m_Label.text = text;
     }
@@ -139,8 +142,10 @@ class SensedPhrase: MonoBehaviour {
 
         if (m_Move.Dst != dst) {
             var src = m_Label.rectTransform.anchoredPosition;
-            m_Move.Start(src, dst);
+            m_Move.Start(src, dst, m_NextMovePct);
+            m_NextMovePct = 0f;
         }
+
     }
 
     // -- c/print
@@ -183,7 +188,7 @@ class SensedPhrase: MonoBehaviour {
     // -- c/delete
     /// start deleting the current phrase
     void SwitchToDelete() {
-        m_PrintingState = PrintingState.Delete;
+        SwitchTo(PrintingState.Delete);
     }
 
     /// delete a character and switch state once empty
@@ -205,11 +210,14 @@ class SensedPhrase: MonoBehaviour {
     // -- c/write
     /// start writing the target phrase
     void SwitchToWrite() {
-        m_PrintingState = PrintingState.Write;
+        SwitchTo(PrintingState.Write);
 
         // resize the label to fit the new phrase
         var size = m_Label.GetPreferredValues(m_DstText);
         m_Label.rectTransform.sizeDelta = size;
+
+        // snap to the initial move position
+        m_NextMovePct = 1f;
     }
 
     /// write a character and stop once at target
@@ -228,10 +236,26 @@ class SensedPhrase: MonoBehaviour {
     // -- c/finish
     /// finish printing the phrase
     void SwitchToNone() {
-        m_PrintingState = PrintingState.None;
+        SwitchTo(PrintingState.None);
+    }
+
+    // -- c/state
+    /// .
+    void SwitchTo(PrintingState next) {
+        var curr = m_PrintingState;
+        if (curr == next) {
+            return;
+        }
+
+        m_PrintingState = next;
     }
 
     // -- queries --
+    /// if this is free to accept a phrase
+    public bool IsFree {
+        get => !m_IsAccepting && m_PrintingState == PrintingState.None;
+    }
+
     /// if this is accepting a phrase
     public bool IsAccepting {
         get => m_IsAccepting;

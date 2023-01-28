@@ -34,7 +34,7 @@ class Player: MonoBehaviour {
     [Tooltip("the write action ref")]
     [SerializeField] InputActionReference m_Write;
 
-    [Tooltip("the config")]
+    [Tooltip(".")]
     [SerializeField] Config m_Config;
 
     // -- props --
@@ -64,11 +64,11 @@ class Player: MonoBehaviour {
     }
 
     void Update() {
-        var fwd = SenseRay();
+        var sense = SenseRay();
 
         // cast for phrases
         var count = Physics.RaycastNonAlloc(
-            fwd,
+            sense,
             m_Hits,
             m_SenseDist,
             s_PoemMask,
@@ -76,7 +76,7 @@ class Player: MonoBehaviour {
         );
 
         // and show them
-        m_Sensed.Accept(count, m_Hits, src: fwd.origin);
+        m_Sensed.Accept(count, m_Hits, sense);
     }
 
     void FixedUpdate() {

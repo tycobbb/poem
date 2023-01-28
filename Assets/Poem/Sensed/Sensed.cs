@@ -14,7 +14,7 @@ class Sensed: MonoBehaviour {
     [Tooltip("a prefab for a sensed phrase")]
     [SerializeField] SensedPhrase m_PhrasePrefab;
 
-    [Tooltip("the config")]
+    [Tooltip(".")]
     [SerializeField] Config m_Config;
 
     // -- props --
@@ -45,7 +45,7 @@ class Sensed: MonoBehaviour {
 
     // -- commands --
     /// show the first n phrases from the hits
-    public void Accept(int count, RaycastHit[] hits, Vector3 src) {
+    public void Accept(int count, RaycastHit[] hits, Ray sense) {
         // clear senses
         m_Nearest = null;
         for (var i = 0 ; i < m_Phrases.Length; i++) {
@@ -80,7 +80,10 @@ class Sensed: MonoBehaviour {
             // set the hit props
             args.Phrase = phrase;
             args.Distance = hit.distance;
-            args.Direction = Vector3.Normalize(t.position - src);
+            args.Direction = Vector3.ProjectOnPlane(
+                Vector3.Normalize(t.position - sense.origin),
+                sense.direction
+            );
 
             // maintain the existing sensor, if any
             if (phrase.Sensed != null) {
@@ -92,7 +95,7 @@ class Sensed: MonoBehaviour {
                     var sensed = m_Phrases[j];
 
                     // the first free sensor accepts this phrase
-                    if (!sensed.IsAccepting) {
+                    if (sensed.IsFree) {
                         sensed.Accept(args);
                         break;
                     }
