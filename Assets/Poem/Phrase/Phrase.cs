@@ -55,7 +55,7 @@ sealed class Phrase: MonoBehaviour {
         m_Expected = code switch {
             KeyCode.Delete or KeyCode.Backspace =>
                 curr.Substring(0, Mathf.Max(curr.Length - 1, 0)),
-            < KeyCode.Delete =>
+            > KeyCode.Space and < KeyCode.Delete =>
                 curr + ch,
             _ => curr
         };

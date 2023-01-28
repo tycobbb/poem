@@ -1,0 +1,73 @@
+#!/bin/sh
+
+# -- includes --
+. ./bin/core/builds.sh
+
+# -- constants --
+# subpath to the mac binary
+TARGET_PATH_MAC="mac/in-text.app"
+
+# subpath to the windows binary
+TARGET_PATH_WIN="win/in-text.exe"
+
+# -- props --
+# the variant (e.g. playtest, release) if any; defaults to release
+VARIANT="$VARIANT_RELEASE"
+
+# -- parsing --
+Usage() {
+  echo "usage: ./bin/run [-h] [-v <variant>]"
+  exit -1
+}
+
+while getopts ":hv:" option; do
+  case "${option}" in
+    h*) Usage ;;
+    v*) VARIANT="$OPTARG" ;;
+  esac
+done
+
+# -- commands --
+# run the playtest build
+RunBuild() {
+  echo "- running build '$build'"
+
+  # get target path
+  case "$os" in
+    mac) target="$TARGET_PATH_MAC" ;;
+    win) target="$TARGET_PATH_WIN" ;;
+  esac
+
+  # make binary path
+  binary="$build/$target"
+  if [ -z "$target" ] || [ -z "$binary" ]; then
+    echo "✘ missing $os binary: $target"
+    exit 3
+  fi
+
+  # run the build
+  open "$binary"
+}
+
+# -- queries --
+# find the current os
+FindOs() {
+  case "$OSTYPE" in
+    darwin*) os="mac" ;;
+    *)       os="win" ;;
+  esac
+}
+
+# -- main --
+Main() {
+  # TODO: don't hardcode this
+  FindOs
+
+  # find the most recent build
+  FindBuild "$VARIANT"
+
+  # and then run it
+  RunBuild
+}
+
+Main "$*"
