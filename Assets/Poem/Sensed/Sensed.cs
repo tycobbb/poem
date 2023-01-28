@@ -46,6 +46,12 @@ class Sensed: MonoBehaviour {
     // -- commands --
     /// show the first n phrases from the hits
     public void Accept(int count, RaycastHit[] hits, Vector3 src) {
+        // clear senses
+        m_Nearest = null;
+        for (var i = 0 ; i < m_Phrases.Length; i++) {
+            m_Phrases[i].Clear();
+        }
+
         // sort hits by distance
         Array.Sort<RaycastHit>(hits, 0, count, new CompareByDistance());
 
@@ -53,34 +59,52 @@ class Sensed: MonoBehaviour {
         var args = new SensedPhrase.Hit();
 
         // sense the phrases
-        m_Nearest = null;
-        for (var i = 0 ; i < m_Phrases.Length; i++) {
-            var sensed = m_Phrases[i];
-            if (i >= count) {
-                sensed.Clear();
-                continue;
-            }
-
+        var j = 0;
+        for (var i = 0 ; i < count; i++) {
+            // find the hit
             var hit = hits[i];
             var t = hit.transform;
 
-            // find the phrase
-            args.Phrase = t.GetComponent<Phrase>();
-            if (args.Phrase == null) {
+            // find the hit phrase
+            var phrase = t.GetComponent<Phrase>();
+            if (phrase == null) {
                 Debug.LogError($"[player] hit {t.name} but it had no phrase");
                 continue;
             }
 
+            // track the neareset phrase
+            if (i == 0) {
+                m_Nearest = phrase;
+            }
+
             // set the hit props
+            args.Phrase = phrase;
             args.Distance = hit.distance;
             args.Direction = Vector3.Normalize(t.position - src);
 
-            // sense the phrase
-            sensed.Accept(args);
+            // maintain the existing sensor, if any
+            if (phrase.Sensed != null) {
+                phrase.Sensed.Accept(args);
+            }
+            // otherwise, find one that is free
+            else {
+                for (; j < m_Phrases.Length; j++) {
+                    var sensed = m_Phrases[j];
 
-            // track the nearest phrase
-            if (i == 0) {
-                m_Nearest = args.Phrase;
+                    // the first free sensor accepts this phrase
+                    if (!sensed.IsAccepting) {
+                        sensed.Accept(args);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // reset any remaining free sensors
+        for (; j < m_Phrases.Length; j++) {
+            var sensed = m_Phrases[j];
+            if (!sensed.IsAccepting) {
+                sensed.Reset();
             }
         }
     }

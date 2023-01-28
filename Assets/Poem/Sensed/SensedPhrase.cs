@@ -48,6 +48,12 @@ class SensedPhrase: MonoBehaviour {
     /// the current printing state
     PrintingState m_PrintingState = PrintingState.None;
 
+    /// if this is accepting a phrase
+    bool m_IsAccepting = false;
+
+    /// the accepted phrase
+    Phrase m_Accepted;
+
     // -- lifecycle --
     void Awake() {
         m_Label.text = "";
@@ -69,19 +75,26 @@ class SensedPhrase: MonoBehaviour {
     }
 
     // -- commands --
-    /// clear the phrase
+    /// clear your senses
     public void Clear() {
-        // if there is anything to clear, clear it
-        if (!m_DstText.IsEmpty()) {
-            Print("");
-        }
+        m_IsAccepting = false;
     }
 
     /// accept and sense a phrase
     public void Accept(Hit hit) {
+        m_IsAccepting = true;
+
+        // accept link if changed
+        var accepted = hit.Phrase;
+        if (accepted != m_Accepted) {
+            Debug.Log($"[sensed] link {accepted} to {this}");
+            m_Accepted = hit.Phrase;
+            m_Accepted.Accept(this);
+        }
+
         // show the text; print by character if not expecting
-        var dstText = hit.Phrase.Text;
-        if (hit.Phrase.IsExpecting) {
+        var dstText = accepted.Text;
+        if (accepted.IsExpecting) {
             Expect(dstText);
         } else if (dstText != m_DstText) {
             Print(dstText);
@@ -96,6 +109,20 @@ class SensedPhrase: MonoBehaviour {
         var srcText = m_Label.text;
         if (m_PrintingState != PrintingState.Delete && (!srcText.IsEmpty() || !dstText.IsEmpty())) {
             Move(hit);
+        }
+    }
+
+    /// reset the sensed phrase
+    public void Reset() {
+        // if there is text to reset, reset it
+        if (!m_DstText.IsEmpty()) {
+            Print("");
+        }
+
+        // break link between previously sensed phrase
+        if (m_Accepted != null) {
+            m_Accepted.Reset();
+            m_Accepted = null;
         }
     }
 
@@ -202,6 +229,12 @@ class SensedPhrase: MonoBehaviour {
     /// finish printing the phrase
     void SwitchToNone() {
         m_PrintingState = PrintingState.None;
+    }
+
+    // -- queries --
+    /// if this is accepting a phrase
+    public bool IsAccepting {
+        get => m_IsAccepting;
     }
 }
 

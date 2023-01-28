@@ -22,6 +22,9 @@ class Phrase: MonoBehaviour {
     /// the edited text, if any
     string m_Expected;
 
+    /// the current sensor of this phrase, if any
+    SensedPhrase m_Accepted;
+
     // -- lifecycle --
     void Awake() {
         // bind events
@@ -44,6 +47,16 @@ class Phrase: MonoBehaviour {
         m_Expected = null;
     }
 
+    /// accept perception from a particular sensor
+    public void Accept(SensedPhrase sensed) {
+        m_Accepted = sensed;
+    }
+
+    /// become unperceived
+    public void Reset() {
+        m_Accepted = null;
+    }
+
     // -- queries --
     /// the object id
     int Id {
@@ -58,6 +71,11 @@ class Phrase: MonoBehaviour {
     /// if the phrase is expecting new text
     public bool IsExpecting {
         get => m_Expected != null;
+    }
+
+    /// the current sensor of this phrase, if any
+    public SensedPhrase Sensed {
+        get => m_Accepted;
     }
 
     // -- events --
