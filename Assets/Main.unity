@@ -7668,42 +7668,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 3865670260347653749, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3865670260822100191, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.9999678
-      objectReference: {fileID: 0}
-    - target: {fileID: 3865670260822100191, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3865670260822100191, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0.008023321
-      objectReference: {fileID: 0}
-    - target: {fileID: 3865670260822100191, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3865670260822100191, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: -0.919
-      objectReference: {fileID: 0}
-    - target: {fileID: 3865670260837474840, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: movement.canRun
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3865670260837474840, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: movement.canCrouch
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3865670260837474840, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: movement.movingPlatforms.enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 3865670260837474842, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
       propertyPath: m_RootOrder
       value: 1
@@ -7749,17 +7713,9 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3865670260837474843, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: m_Poetry
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 3865670260837474843, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
       propertyPath: m_Sensed
       value: 
       objectReference: {fileID: 2570852318628819741}
-    - target: {fileID: 3865670260837474843, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 3865670260837474918, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
       propertyPath: m_Name
       value: Player

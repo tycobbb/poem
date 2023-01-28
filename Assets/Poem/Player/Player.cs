@@ -12,7 +12,7 @@ sealed class Player: MonoBehaviour {
     // -- tuning --
     [Header("tuning")]
     [Tooltip("the distance the player can sense")]
-    [SerializeField] float m_SenseDist;
+    [SerializeField] EaseCurve m_SenseDist;
 
     // -- cfg --
     [Header("cfg")]
@@ -65,11 +65,14 @@ sealed class Player: MonoBehaviour {
     void Update() {
         var sense = SenseRay();
 
+        // sense range, higher when looking up
+        var range = m_SenseDist.Evaluate(Mathf.Max(Vector3.Dot(sense.direction, Vector3.up), 0f));
+
         // cast for phrases
         var count = Physics.RaycastNonAlloc(
             sense,
             m_Hits,
-            m_SenseDist,
+            range,
             s_PoemMask,
             QueryTriggerInteraction.Ignore
         );
