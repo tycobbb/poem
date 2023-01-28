@@ -144,10 +144,10 @@ sealed class Player: MonoBehaviour {
             return;
         }
 
-        if (IsWriting) {
-            StopWriting();
-        } else {
+        if (!IsWriting) {
             StartWriting();
+        } else {
+            StopWriting();
         }
     }
 

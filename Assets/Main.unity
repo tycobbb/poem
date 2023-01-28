@@ -7716,14 +7716,6 @@ PrefabInstance:
       propertyPath: m_Sensed
       value: 
       objectReference: {fileID: 2570852318628819741}
-    - target: {fileID: 3865670260837474843, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: m_SenseRadius.m_Range.Max
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3865670260837474843, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
-      propertyPath: m_SenseRadius.m_Range.Min
-      value: 0.1
-      objectReference: {fileID: 0}
     - target: {fileID: 3865670260837474918, guid: 41665a53ca78f4da7b72c185fb0df1fc, type: 3}
       propertyPath: m_Name
       value: Player

@@ -135,6 +135,7 @@ sealed class SensedPhrase: MonoBehaviour {
     void Expect(string text) {
         SwitchTo(PrintingState.None);
         m_DstText = text;
+        Resize();
         m_Label.text = text;
     }
 
@@ -155,6 +156,12 @@ sealed class SensedPhrase: MonoBehaviour {
             m_NextMovePct = 0f;
         }
 
+    }
+
+    /// resize label to fit phrase
+    void Resize() {
+        var size = m_Label.GetPreferredValues(m_DstText);
+        m_Label.rectTransform.sizeDelta = size;
     }
 
     // -- c/print
@@ -222,8 +229,7 @@ sealed class SensedPhrase: MonoBehaviour {
         SwitchTo(PrintingState.Write);
 
         // resize the label to fit the new phrase
-        var size = m_Label.GetPreferredValues(m_DstText);
-        m_Label.rectTransform.sizeDelta = size;
+        Resize();
 
         // snap to the initial move position
         m_NextMovePct = 1f;

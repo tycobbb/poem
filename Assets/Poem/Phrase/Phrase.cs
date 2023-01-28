@@ -49,7 +49,16 @@ sealed class Phrase: MonoBehaviour {
             m_Expected = "";
         }
 
-        m_Expected += ch;
+        var curr = m_Expected;
+        var code = (KeyCode)ch;
+
+        m_Expected = code switch {
+            KeyCode.Delete or KeyCode.Backspace =>
+                curr.Substring(0, Mathf.Max(curr.Length - 1, 0)),
+            < KeyCode.Delete =>
+                curr + ch,
+            _ => curr
+        };
     }
 
     /// assume the expected text's end
