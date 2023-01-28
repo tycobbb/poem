@@ -30,8 +30,11 @@ sealed class SensedPhrase: MonoBehaviour {
     [Tooltip("the eased value for a move")]
     [SerializeField] EaseVec2 m_Move;
 
-    [Tooltip("the radius curve")]
+    [Tooltip("the radius curve by normalized distance")]
     [SerializeField] EaseCurve m_Radius;
+
+    [Tooltip("the alpha curve by normalized distance")]
+    [SerializeField] EaseCurve m_Alpha;
 
     [Tooltip("the distance range")]
     [SerializeField] FloatRange m_Distance;
@@ -137,7 +140,13 @@ sealed class SensedPhrase: MonoBehaviour {
 
     /// move the label into position
     void Move(Hit hit) {
-        var rad = m_Radius.Evaluate(m_Distance.Unlerp(hit.Distance));
+        var dist = m_Distance.Unlerp(hit.Distance);
+
+        // move alpha
+        m_Label.alpha = m_Alpha.Evaluate(dist);
+
+        // move position
+        var rad = m_Radius.Evaluate(dist);
         var dst = rad * new Vector2(hit.Direction.x, hit.Direction.y);
 
         if (m_Move.Dst != dst) {
@@ -253,7 +262,10 @@ sealed class SensedPhrase: MonoBehaviour {
     // -- queries --
     /// if this is free to accept a phrase
     public bool IsFree {
-        get => !m_IsAccepting && m_PrintingState == PrintingState.None;
+        get => (
+            m_Accepted == null &&
+            m_PrintingState == PrintingState.None
+        );
     }
 
     /// if this is accepting a phrase

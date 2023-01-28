@@ -11,8 +11,12 @@ sealed class Player: MonoBehaviour {
 
     // -- tuning --
     [Header("tuning")]
-    [Tooltip("the distance the player can sense")]
-    [SerializeField] EaseCurve m_SenseDist;
+    [UnityEngine.Serialization.FormerlySerializedAs("m_SenseDist")]
+    [Tooltip("the range of the player's sense")]
+    [SerializeField] EaseCurve m_SenseRange;
+
+    [Tooltip("the radius of the player's sense")]
+    [SerializeField] EaseCurve m_SenseRadius;
 
     // -- cfg --
     [Header("cfg")]
@@ -65,12 +69,15 @@ sealed class Player: MonoBehaviour {
     void Update() {
         var sense = SenseRay();
 
-        // sense range, higher when looking up
-        var range = m_SenseDist.Evaluate(Mathf.Max(Vector3.Dot(sense.direction, Vector3.up), 0f));
+        // sense range & radius; increases as you look up
+        var upness = Mathf.Max(Vector3.Dot(sense.direction, Vector3.up), 0f);
+        var range = m_SenseRange.Evaluate(upness);
+        var radius = m_SenseRadius.Evaluate(upness);
 
         // cast for phrases
-        var count = Physics.RaycastNonAlloc(
+        var count = Physics.SphereCastNonAlloc(
             sense,
+            radius,
             m_Hits,
             range,
             s_PoemMask,

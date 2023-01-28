@@ -96,6 +96,16 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
+  m_Alpha:
+    m_Range:
+      Min: 1
+      Max: 0.3
+    m_Curve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
   m_Distance:
     Min: 0
     Max: 10
