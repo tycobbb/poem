@@ -101,7 +101,7 @@ sealed class Phrase: MonoBehaviour {
     #if UNITY_EDITOR
     [ContextMenu("Sync Name")]
     void SyncName() {
-        var text = m_Text.Split(' ')[0];
+        var text = m_Text;
         var textInfo = Thread.CurrentThread.CurrentCulture.TextInfo;
         gameObject.name = textInfo.ToTitleCase(text);
     }
