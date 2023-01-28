@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace Poem {
 
-/// the application
-public class App: MonoBehaviour {
+/// .
+sealed class App: MonoBehaviour {
     // -- refs --
     [Header("refs")]
     [Tooltip("the persistence store")]
@@ -11,8 +11,15 @@ public class App: MonoBehaviour {
 
     // -- lifecyle --
     void Awake() {
+        // load any persisted state
         m_Store.Load();
     }
+
+    async void OnApplicationQuit() {
+        // persist any state
+        await m_Store.Save();
+    }
+
 }
 
 }

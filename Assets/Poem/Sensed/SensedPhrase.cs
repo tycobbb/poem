@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Poem {
 
 /// a single phrase sensed by the player
-class SensedPhrase: MonoBehaviour {
+sealed class SensedPhrase: MonoBehaviour {
     /// the state in the text printing process
     enum PrintingState {
         None,

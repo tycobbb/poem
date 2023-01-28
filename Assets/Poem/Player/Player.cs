@@ -1,11 +1,10 @@
-using Hertzole.GoldPlayer;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Poem {
 
 /// .
-class Player: MonoBehaviour {
+sealed class Player: MonoBehaviour {
     // -- statics --
     /// .
     static int s_PoemMask = -1;

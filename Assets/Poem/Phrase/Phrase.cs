@@ -7,7 +7,7 @@ using System.Threading;
 namespace Poem {
 
 /// a phrase in a text
-class Phrase: MonoBehaviour {
+sealed class Phrase: MonoBehaviour {
     // -- cfg --
     [Header("cfg")]
     [Tooltip(".")]
@@ -19,7 +19,7 @@ class Phrase: MonoBehaviour {
     [SerializeField] Store m_Store;
 
     // -- props --
-    /// the edited text, if any
+    /// the expected text, if any
     string m_Expected;
 
     /// the current sensor of this phrase, if any
@@ -32,6 +32,17 @@ class Phrase: MonoBehaviour {
     }
 
     // -- commands --
+    /// accept perception from a particular sensor
+    public void Accept(SensedPhrase sensed) {
+        m_Accepted = sensed;
+    }
+
+    /// become unperceived
+    public void Reset() {
+        m_Accepted = null;
+    }
+
+    // -- c/edit
     /// expect the character to appear
     public void Expect(char ch) {
         if (m_Expected == null) {
@@ -45,16 +56,7 @@ class Phrase: MonoBehaviour {
     public void Assume() {
         m_Text = m_Expected;
         m_Expected = null;
-    }
-
-    /// accept perception from a particular sensor
-    public void Accept(SensedPhrase sensed) {
-        m_Accepted = sensed;
-    }
-
-    /// become unperceived
-    public void Reset() {
-        m_Accepted = null;
+        m_Store.SavePhrase(IntoRec());
     }
 
     // -- queries --
@@ -81,9 +83,9 @@ class Phrase: MonoBehaviour {
     // -- events --
     /// when the store finishes loading the text
     void OnStoreLoad() {
-        var text = m_Store.FindPhraseText(Id);
-        if (text != null && !text.IsEmpty()) {
-            m_Text = text;
+        var rec = m_Store.FindPhrase(Id);
+        if (rec != null && !rec.Text.IsEmpty()) {
+            m_Text = rec.Text;
         }
     }
 

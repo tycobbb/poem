@@ -12,11 +12,8 @@ namespace Poem {
 /// the persistence container
 sealed class Store: ScriptableObject {
     // -- props --
-    /// the current poem on disk
-    PoemRec m_Poem;
-
-    /// a map of id to phrase text
-    Dictionary<int, string> m_PhraseTextById = new Dictionary<int, string>();
+    /// a map of id to phrase rec
+    Dictionary<int, PhraseRec> m_PhraseById = new Dictionary<int, PhraseRec>();
 
     /// a callback on load
     Action m_OnLoad = () => {};
@@ -28,12 +25,12 @@ sealed class Store: ScriptableObject {
         Directory.CreateDirectory(RootPath);
 
         // load the records
-        m_Poem = await LoadRecord<PoemRec>(PoemPath) ?? new PoemRec();
+        var poem = await LoadRecord<PoemRec>(PoemPath) ?? new PoemRec();
 
         // build the map
-        if (m_Poem.Phrases != null) {
-            foreach (var phrase in m_Poem.Phrases) {
-                m_PhraseTextById.Add(phrase.Id, phrase.Text);
+        if (poem.Phrases != null) {
+            foreach (var phrase in poem.Phrases) {
+                m_PhraseById[phrase.Id] = phrase;
             }
         }
 
@@ -51,30 +48,26 @@ sealed class Store: ScriptableObject {
         }
     }
 
-    // -- c/syncing
-    /// sync the in-memory poem record
-    public void SyncPoem() {
-        // generate records for each phrase
-        var records = FindPhraseObjects()
-            .Select((p) => p.IntoRec())
-            .ToArray();
-
-        // update world record
-        m_Poem.Phrases = records;
+    // -- c/records
+    /// save the phrase to the store
+    public void SavePhrase(PhraseRec phrase) {
+        m_PhraseById[phrase.Id] = phrase;
     }
 
+    // -- c/syncing
     /// save the current state to file
     [ContextMenu("Save Store")]
     public async Task Save() {
-        // sync state
-        SyncPoem();
-
         // ensure we have a directory to write to
         Directory.CreateDirectory(RootPath);
 
-        // write the records to disk
+        // build the poem record
+        var poem = new PoemRec();
+        poem.Phrases = m_PhraseById.Values.ToArray();
+
+        // and write it to disk
         await Task.WhenAll(
-            SaveRecord<PoemRec>(PoemPath, m_Poem)
+            SaveRecord<PoemRec>(PoemPath, poem)
         );
     }
 
@@ -95,10 +88,10 @@ sealed class Store: ScriptableObject {
     }
 
     // -- queries --
-    /// get the phrase text, if any, for this id
-    public string FindPhraseText(int id) {
-        m_PhraseTextById.TryGetValue(id, out var text);
-        return text;
+    /// get the phrase, if any, for this id
+    public PhraseRec FindPhrase(int id) {
+        m_PhraseById.TryGetValue(id, out var phrase);
+        return phrase;
     }
 
     /// resolve a relative path to an absolute one
