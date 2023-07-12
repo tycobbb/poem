@@ -5,7 +5,7 @@ namespace Poem {
 
 /// a timer w/ a progress curve
 [Serializable]
-record EaseTimer {
+public record EaseTimer {
     // -- constants --
     // the sentinel time for an inacitve timer
     const float k_Inactive = -1f;

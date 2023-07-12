@@ -5,17 +5,17 @@ namespace Poem {
 
 /// a timer w/ a progress curve
 [Serializable]
-struct EaseVec2 {
+public struct EaseVec2 {
     // -- cfg --
     [Tooltip("the timer")]
     [SerializeField] EaseTimer m_Timer;
 
     // -- props --
     /// the source value
-    Vector2 m_Src;
+    [ReadOnly] Vector2 m_Src;
 
     /// the destination value
-    Vector2 m_Dst;
+    [ReadOnly] Vector2 m_Dst;
 
     // -- lifetime --
     /// start the timer (optionally, at a particular raw percent)

@@ -149,14 +149,14 @@ sealed class Store: ScriptableObject {
             await stream.WriteAsync(data, 0, data.Length);
         }
 
-        Debug.Log($"[store] saved file @ {RenderPath(path)} => {json}");
+        Debug.Log(Tag.Store.F($"saved file @ {RenderPath(path)} => {json}"));
     }
 
     /// load the record from disk at path
     async Task<F> LoadRecord<F>(string path) where F: StoreFile {
         // check for file
         if (!File.Exists(path)) {
-            Debug.Log($"[store] no file found @ {RenderPath(path)}");
+            Debug.Log(Tag.Store.F($"no file found @ {RenderPath(path)}"));
             return default;
         }
 
@@ -167,7 +167,7 @@ sealed class Store: ScriptableObject {
             var read = await stream.ReadAsync(data, 0, (int)stream.Length);
 
             if (read != stream.Length) {
-                Debug.LogError($"[store] only read {read} of {stream.Length} bytes from file @ {RenderPath(path)}");
+                Debug.LogError(Tag.Store.F($"only read {read} of {stream.Length} bytes from file @ {RenderPath(path)}"));
                 throw new System.Exception("couldn't read the entire file!");
             }
         }
@@ -175,7 +175,7 @@ sealed class Store: ScriptableObject {
         // decode record from json
         var json = Encoding.UTF8.GetString(data);
         var record = JsonUtility.FromJson<F>(json);
-        Debug.Log($"[store] loaded file @ {RenderPath(path)} => {json}");
+        Debug.Log(Tag.Store.F($"loaded file @ {RenderPath(path)} => {json}"));
 
         return record;
     }

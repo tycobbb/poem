@@ -5,7 +5,7 @@ namespace Poem {
 
 /// a normalized curve with a min & max value
 [Serializable]
-struct EaseCurve {
+public struct EaseCurve {
     // -- fields --
     [Tooltip("the range")]
     [SerializeField] FloatRange m_Range;

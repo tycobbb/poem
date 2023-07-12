@@ -19,7 +19,6 @@ sealed class App: MonoBehaviour {
         // persist any state
         await m_Store.Save();
     }
-
 }
 
 }

@@ -13,31 +13,51 @@ sealed class SensedPhrase: MonoBehaviour {
     }
 
     /// a hit phrase
-    public ref struct Hit {
+    public struct Hit {
         /// .
         public Phrase Phrase;
+
         /// .
         public float Distance;
+
         /// .
-        public Vector3 Direction;
+        public Vector2 Direction;
     }
 
     // -- tuning --
     [Header("tuning")]
+    [Tooltip("an eased position for the move")]
+    [SerializeField] EaseVec2 m_Move;
+
     [Tooltip("the time to print the next character")]
     [SerializeField] EaseTimer m_Print;
 
-    [Tooltip("the eased value for a move")]
-    [SerializeField] EaseVec2 m_Move;
-
     [Tooltip("the radius curve by normalized distance")]
-    [SerializeField] EaseCurve m_Radius;
+    [UnityEngine.Serialization.FormerlySerializedAs("m_Radius")]
+    [SerializeField] EaseCurve m_RadiusByDist;
 
     [Tooltip("the alpha curve by normalized distance")]
-    [SerializeField] EaseCurve m_Alpha;
+    [UnityEngine.Serialization.FormerlySerializedAs("m_Alpha")]
+    [SerializeField] EaseCurve m_AlphaByDist;
 
     [Tooltip("the distance range")]
-    [SerializeField] FloatRange m_Distance;
+    [UnityEngine.Serialization.FormerlySerializedAs("m_Distance")]
+    [SerializeField] FloatRange m_DistRange;
+
+    // -- audio --
+    [Header("audio")]
+    [Tooltip("the pitch offset by direction (colinearity w/ up)")]
+    [UnityEngine.Serialization.FormerlySerializedAs("m_PitchOffsetByDirection")]
+    [SerializeField] EaseCurve m_PitchByDir;
+
+    [Tooltip("the volume by normalized distance")]
+    [UnityEngine.Serialization.FormerlySerializedAs("m_GainByDistance")]
+    [UnityEngine.Serialization.FormerlySerializedAs("m_VolumeByDistance")]
+    [SerializeField] EaseCurve m_VolumeByDist;
+
+    [Tooltip("the balance by direction (colinearity w/ right)")]
+    [UnityEngine.Serialization.FormerlySerializedAs("m_BalanceByDirection")]
+    [SerializeField] EaseCurve m_BalanceByDir;
 
     // -- refs --
     [Header("refs")]
@@ -51,11 +71,11 @@ sealed class SensedPhrase: MonoBehaviour {
     /// the current printing state
     PrintingState m_PrintingState = PrintingState.None;
 
-    /// the accepted phrase
-    Phrase m_Accepted;
-
     /// if this is accepting a phrase
     bool m_IsAccepting = false;
+
+    /// the accepted phrase
+    Hit m_Accepted;
 
     /// the pct to start the next move from
     float m_NextMovePct = 0f;
@@ -65,10 +85,13 @@ sealed class SensedPhrase: MonoBehaviour {
         m_Label.text = "";
     }
 
+    void Start() {
+        InitAudio();
+    }
+
     void Update() {
         if (m_Print.IsActive) {
             m_Print.Tick();
-
             if (m_Print.Pct == 1f) {
                 PrintOne();
             }
@@ -80,6 +103,10 @@ sealed class SensedPhrase: MonoBehaviour {
         }
     }
 
+    void OnAudioFilterRead(float[] data, int channels) {
+        PlayAudio(data, channels);
+    }
+
     // -- commands --
     /// clear your senses
     public void Clear() {
@@ -87,19 +114,22 @@ sealed class SensedPhrase: MonoBehaviour {
     }
 
     /// accept and sense a phrase
-    public void Accept(Hit hit) {
+    public void Accept(in Hit hit) {
         m_IsAccepting = true;
 
         // accept link if changed
-        var accepted = hit.Phrase;
-        if (accepted != m_Accepted) {
-            m_Accepted = hit.Phrase;
-            m_Accepted.Accept(this);
+        var phrase = hit.Phrase;
+        if (phrase != m_Accepted.Phrase) {
+            Debug.Log(Tag.Sense.F($"{name} - accept phrase {m_Accepted.Phrase} -> {phrase}"));
+            m_Accepted.Phrase = phrase;
+            m_Accepted.Direction = hit.Direction;
+            m_Accepted.Distance = hit.Distance;
+            m_Accepted.Phrase.Accept(this);
         }
 
         // show the text; print by character if not expecting
-        var dstText = accepted.Text;
-        if (accepted.IsExpecting) {
+        var dstText = phrase.Text;
+        if (phrase.IsExpecting) {
             Expect(dstText);
         } else if (dstText != m_DstText) {
             Print(dstText);
@@ -125,9 +155,9 @@ sealed class SensedPhrase: MonoBehaviour {
         }
 
         // break link between previously sensed phrase
-        if (m_Accepted != null) {
-            m_Accepted.Reset();
-            m_Accepted = null;
+        if (m_Accepted.Phrase != null) {
+            m_Accepted.Phrase.Reset();
+            m_Accepted.Phrase = null;
         }
     }
 
@@ -140,22 +170,21 @@ sealed class SensedPhrase: MonoBehaviour {
     }
 
     /// move the label into position
-    void Move(Hit hit) {
-        var dist = m_Distance.Unlerp(hit.Distance);
+    void Move(in Hit hit) {
+        var dist = m_DistRange.Unlerp(hit.Distance);
 
         // move alpha
-        m_Label.alpha = m_Alpha.Evaluate(dist);
+        m_Label.alpha = m_AlphaByDist.Evaluate(dist);
 
         // move position
-        var rad = m_Radius.Evaluate(dist);
-        var dst = rad * new Vector2(hit.Direction.x, hit.Direction.y);
+        var rad = m_RadiusByDist.Evaluate(dist);
+        var dst = rad * hit.Direction;
 
         if (m_Move.Dst != dst) {
             var src = m_Label.rectTransform.anchoredPosition;
             m_Move.Start(src, dst, m_NextMovePct);
             m_NextMovePct = 0f;
         }
-
     }
 
     /// resize label to fit phrase
@@ -265,11 +294,77 @@ sealed class SensedPhrase: MonoBehaviour {
         m_PrintingState = next;
     }
 
+    // -- audio --
+    const float k_2pi = 2f * Mathf.PI;
+
+    /// the name of the go
+    string m_Name;
+
+    /// the sample rate
+    int m_SampleRate;
+
+    /// the audio wave phase
+    double m_Phase = 0;
+
+    /// if audio is currently active
+    bool m_IsAudioActive = false;
+
+    // -- a/commands --
+    /// .
+    void InitAudio() {
+        m_Name = name;
+        m_SampleRate = AudioSettings.outputSampleRate;
+        m_IsAudioActive = true;
+    }
+
+    /// .
+    void PlayAudio(float[] data, int channels) {
+        var isBlank = (
+            m_Accepted.Phrase == null &&
+            m_PrintingState != PrintingState.Delete
+        );
+
+        if (!m_IsAudioActive || isBlank) {
+            return;
+        }
+
+        // precalculate inputs
+        var dist = m_DistRange.Unlerp(m_Accepted.Distance);
+        var dirDotUp = Vector2.Dot(m_Accepted.Direction, Vector2.up);
+        var dirDotRight = Vector2.Dot(m_Accepted.Direction, Vector2.right);
+
+        // ignore audio where volume is 0
+        var volume = m_VolumeByDist.Evaluate(dist);
+        if (volume == 0) {
+            return;
+        }
+
+        // sample props
+        var pitch = 440 + m_PitchByDir.Evaluate(dirDotUp);
+        var balance = m_BalanceByDir.Evaluate(dirDotRight);
+        Debug.Log(Tag.Sense.F($"{m_Name} - \"{m_Accepted.Phrase?.Text}\" - play {pitch} {volume} {balance}"));
+
+        // generate audio
+        var delta = pitch * k_2pi / m_SampleRate;
+        for (var i = 0; i < data.Length; i += channels) {
+            m_Phase += delta;
+
+            var sample = volume * Mathf.Sin((float)(m_Phase));
+            for (var c = 0; c < channels; c++) {
+                data[i + c] = sample;
+            }
+
+            if (m_Phase > k_2pi) {
+                m_Phase = 0;
+            }
+        }
+    }
+
     // -- queries --
     /// if this is free to accept a phrase
     public bool IsFree {
         get => (
-            m_Accepted == null &&
+            m_Accepted.Phrase == null &&
             m_PrintingState == PrintingState.None
         );
     }
