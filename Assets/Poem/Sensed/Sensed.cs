@@ -68,11 +68,11 @@ class Sensed: MonoBehaviour {
             // find the hit phrase
             var phrase = t.GetComponent<Phrase>();
             if (phrase == null) {
-                Debug.LogError($"[player] hit {t.name} but it had no phrase");
+                Tag.Playr.I($"hit {t.name} but it had no phrase");
                 continue;
             }
 
-            // track the neareset phrase
+            // track the nearest phrase
             if (i == 0) {
                 m_Nearest = phrase;
             }
@@ -115,7 +115,7 @@ class Sensed: MonoBehaviour {
     /// expect the character to appear
     public void Expect(char ch) {
         if (m_Nearest == null) {
-            Debug.LogError($"[sensed] there was no phrase to expect");
+            Tag.Sense.E("there was no phrase to expect");
             return;
         }
 

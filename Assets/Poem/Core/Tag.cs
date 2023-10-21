@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Poem {
 
 /// a log tag
@@ -13,6 +15,22 @@ partial record Tag {
     Tag(string name, string color) {
         m_Name = name;
         m_Color = color;
+    }
+
+    // -- commands --
+    /// log an info message
+    public void I(string message) {
+        Debug.Log(F(message));
+    }
+
+    /// log an warning message
+    public void W(string message) {
+        Debug.LogWarning(F(message));
+    }
+
+    /// log an error message
+    public void E(string message) {
+        Debug.LogError(F(message));
     }
 
     // -- queries --

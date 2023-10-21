@@ -120,7 +120,7 @@ sealed class SensedPhrase: MonoBehaviour {
         // accept link if changed
         var phrase = hit.Phrase;
         if (phrase != m_Accepted.Phrase) {
-            Debug.Log(Tag.Sense.F($"{name} - accept phrase {m_Accepted.Phrase} -> {phrase}"));
+            Tag.Sense.I($"{name} - accept phrase {m_Accepted.Phrase} -> {phrase}");
             m_Accepted.Phrase = phrase;
             m_Accepted.Direction = hit.Direction;
             m_Accepted.Distance = hit.Distance;
@@ -342,7 +342,7 @@ sealed class SensedPhrase: MonoBehaviour {
         // sample props
         var pitch = 440 + m_PitchByDir.Evaluate(dirDotUp);
         var balance = m_BalanceByDir.Evaluate(dirDotRight);
-        Debug.Log(Tag.Sense.F($"{m_Name} - \"{m_Accepted.Phrase?.Text}\" - play {pitch} {volume} {balance}"));
+        Tag.Sense.I($"{m_Name} - \"{m_Accepted.Phrase?.Text}\" - play {pitch} {volume} {balance}");
 
         // generate audio
         var delta = pitch * k_2pi / m_SampleRate;
