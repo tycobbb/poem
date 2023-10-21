@@ -12,7 +12,6 @@ public class ReadOnlyDrawer: PropertyDrawer {
         SerializedProperty property,
         GUIContent label
     ) {
-        Debug.Log($"label {label}");
         var prev = GUI.enabled;
         GUI.enabled = false;
         EditorGUI.PropertyField(position, property, label);

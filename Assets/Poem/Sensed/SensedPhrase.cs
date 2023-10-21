@@ -46,6 +46,9 @@ sealed class SensedPhrase: MonoBehaviour {
 
     // -- audio --
     [Header("audio")]
+    [Tooltip("the audio fade")]
+    [SerializeField] EaseTimer m_Fade;
+
     [Tooltip("the pitch offset by direction (colinearity w/ up)")]
     [UnityEngine.Serialization.FormerlySerializedAs("m_PitchOffsetByDirection")]
     [SerializeField] EaseCurve m_PitchByDir;
@@ -69,7 +72,7 @@ sealed class SensedPhrase: MonoBehaviour {
     string m_DstText = "";
 
     /// the current printing state
-    PrintingState m_PrintingState = PrintingState.None;
+    PrintingState m_State = PrintingState.None;
 
     /// if this is accepting a phrase
     bool m_IsAccepting = false;
@@ -100,6 +103,10 @@ sealed class SensedPhrase: MonoBehaviour {
         if (m_Move.IsActive) {
             m_Move.Tick();
             m_Label.rectTransform.anchoredPosition = m_Move.Current;
+        }
+
+        if (m_Fade.IsActive) {
+            m_Fade.Tick();
         }
     }
 
@@ -142,7 +149,7 @@ sealed class SensedPhrase: MonoBehaviour {
 
         // move the label unless it's deleting
         var srcText = m_Label.text;
-        if (m_PrintingState != PrintingState.Delete && (!srcText.IsEmpty() || !dstText.IsEmpty())) {
+        if (m_State != PrintingState.Delete && (!srcText.IsEmpty() || !dstText.IsEmpty())) {
             Move(hit);
         }
     }
@@ -154,16 +161,23 @@ sealed class SensedPhrase: MonoBehaviour {
             Print("");
         }
 
-        // break link between previously sensed phrase
-        if (m_Accepted.Phrase != null) {
-            m_Accepted.Phrase.Reset();
-            m_Accepted.Phrase = null;
+        if (m_Accepted.Phrase == null) {
+            return;
         }
+
+        if (m_Volume != 0f) {
+            m_Volume = 0f;
+            Tag.Audio.I($"{m_Name} - \"{m_Accepted.Phrase?.Text}\" - stop");
+        }
+
+        // break link between previously sensed phrase
+        m_Accepted.Phrase.Reset();
+        m_Accepted.Phrase = null;
     }
 
     /// expect the text to appear
     void Expect(string text) {
-        SwitchTo(PrintingState.None);
+        SwitchToNone();
         m_DstText = text;
         Resize();
         m_Label.text = text;
@@ -209,7 +223,7 @@ sealed class SensedPhrase: MonoBehaviour {
         }
 
         // start printing if not already
-        if (!m_Print.IsActive && m_PrintingState != PrintingState.None) {
+        if (!m_Print.IsActive && m_State != PrintingState.None) {
             m_Print.Start();
         }
     }
@@ -217,7 +231,7 @@ sealed class SensedPhrase: MonoBehaviour {
     /// print a single character
     void PrintOne() {
         // print a character and update state
-        switch (m_PrintingState) {
+        switch (m_State) {
         case PrintingState.Delete:
             DeleteOne(); break;
         case PrintingState.Write:
@@ -225,7 +239,7 @@ sealed class SensedPhrase: MonoBehaviour {
         }
 
         // continue until finished
-        if (m_PrintingState != PrintingState.None) {
+        if (m_State != PrintingState.None) {
             m_Print.Start();
         }
     }
@@ -234,6 +248,9 @@ sealed class SensedPhrase: MonoBehaviour {
     /// start deleting the current phrase
     void SwitchToDelete() {
         SwitchTo(PrintingState.Delete);
+
+        // start audio fade out
+        m_Fade.Start(duration: m_Print.Duration * m_Label.text.Length);
     }
 
     /// delete a character and switch state once empty
@@ -262,6 +279,9 @@ sealed class SensedPhrase: MonoBehaviour {
 
         // snap to the initial move position
         m_NextMovePct = 1f;
+
+        // start audio fade in
+        m_Fade.Start(duration: m_Print.Duration * m_DstText.Length);
     }
 
     /// write a character and stop once at target
@@ -286,12 +306,12 @@ sealed class SensedPhrase: MonoBehaviour {
     // -- c/state
     /// .
     void SwitchTo(PrintingState next) {
-        var curr = m_PrintingState;
+        var curr = m_State;
         if (curr == next) {
             return;
         }
 
-        m_PrintingState = next;
+        m_State = next;
     }
 
     // -- audio --
@@ -309,6 +329,16 @@ sealed class SensedPhrase: MonoBehaviour {
     /// if audio is currently active
     bool m_IsAudioActive = false;
 
+    // -- a/debug
+    /// the current volume
+    float m_Volume = 0f;
+
+    /// the current pitch
+    float m_Pitch = 0f;
+
+    /// the current balance
+    float m_Balance = 0f;
+
     // -- a/commands --
     /// .
     void InitAudio() {
@@ -321,7 +351,7 @@ sealed class SensedPhrase: MonoBehaviour {
     void PlayAudio(float[] data, int channels) {
         var isBlank = (
             m_Accepted.Phrase == null &&
-            m_PrintingState != PrintingState.Delete
+            m_State != PrintingState.Delete
         );
 
         if (!m_IsAudioActive || isBlank) {
@@ -333,16 +363,28 @@ sealed class SensedPhrase: MonoBehaviour {
         var dirDotUp = Vector2.Dot(m_Accepted.Direction, Vector2.up);
         var dirDotRight = Vector2.Dot(m_Accepted.Direction, Vector2.right);
 
+        // sample props
+        var fade = m_Fade.Pct;
+        if (m_State == PrintingState.Delete) {
+            fade = 1f - fade;
+        }
+
+        var volume = m_VolumeByDist.Evaluate(dist) * fade;
+        var pitch = 440 + m_PitchByDir.Evaluate(dirDotUp);
+        var balance = m_BalanceByDir.Evaluate(dirDotRight);
+
+        if (volume != m_Volume || pitch != m_Pitch || balance != m_Balance) {
+            Tag.Audio.I($"{m_Name} - \"{m_Accepted.Phrase?.Text}\" - play {volume} {pitch} {balance}");
+        }
+
+        m_Volume = volume;
+        m_Pitch = pitch;
+        m_Balance = balance;
+
         // ignore audio where volume is 0
-        var volume = m_VolumeByDist.Evaluate(dist);
         if (volume == 0) {
             return;
         }
-
-        // sample props
-        var pitch = 440 + m_PitchByDir.Evaluate(dirDotUp);
-        var balance = m_BalanceByDir.Evaluate(dirDotRight);
-        Tag.Sense.I($"{m_Name} - \"{m_Accepted.Phrase?.Text}\" - play {pitch} {volume} {balance}");
 
         // generate audio
         var delta = pitch * k_2pi / m_SampleRate;
@@ -365,7 +407,7 @@ sealed class SensedPhrase: MonoBehaviour {
     public bool IsFree {
         get => (
             m_Accepted.Phrase == null &&
-            m_PrintingState == PrintingState.None
+            m_State == PrintingState.None
         );
     }
 

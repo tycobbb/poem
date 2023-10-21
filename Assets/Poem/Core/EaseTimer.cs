@@ -37,7 +37,11 @@ public record EaseTimer {
 
     // -- commands --
     /// start the timer (optionally, at a particular raw percent)
-    public void Start(float pct = 0f) {
+    public void Start(float pct = 0f, float duration = -1f) {
+        if (duration != -1f) {
+            m_Duration = duration;
+        }
+
         m_Elapsed = pct * m_Duration;
     }
 
@@ -87,6 +91,11 @@ public record EaseTimer {
     /// the uncurved progress
     public float Raw {
         get => m_RawPct;
+    }
+
+    /// the current duration
+    public float Duration {
+        get => m_Duration;
     }
 }
 

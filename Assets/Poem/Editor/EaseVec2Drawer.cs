@@ -56,7 +56,6 @@ sealed class EaseVec2Drawer: PropertyDrawer {
         var obj = prop.serializedObject.targetObject;
         var field = obj.GetType().GetField(prop.name, BindingFlags.Instance | BindingFlags.NonPublic);
         var value = field.GetValue(obj);
-        Debug.Log($"field {value}");
 
         // // draw the curve
         // var rc = r;
