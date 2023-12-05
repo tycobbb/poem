@@ -124,33 +124,30 @@ sealed class SensedPhrase: MonoBehaviour {
     public void Accept(in Hit hit) {
         m_IsAccepting = true;
 
-        // accept link if changed
+        // accept new link to phrase if changed
         var phrase = hit.Phrase;
         if (phrase != m_Accepted.Phrase) {
             Tag.Sense.I($"{name} - accept phrase {m_Accepted.Phrase} -> {phrase}");
             m_Accepted.Phrase = phrase;
-            m_Accepted.Direction = hit.Direction;
-            m_Accepted.Distance = hit.Distance;
             m_Accepted.Phrase.Accept(this);
         }
+
+        // update relative position of accepted phrase
+        m_Accepted.Distance = hit.Distance;
+        m_Accepted.Direction = hit.Direction;
 
         // show the text; print by character if not expecting
         var dstText = phrase.Text;
         if (phrase.IsExpecting) {
             Expect(dstText);
-        } else if (dstText != m_DstText) {
-            Print(dstText);
-        }
-
-        // if the text is the same, do nothing
-        if (dstText != m_DstText) {
+        } else {
             Print(dstText);
         }
 
         // move the label unless it's deleting
         var srcText = m_Label.text;
         if (m_State != PrintingState.Delete && (!srcText.IsEmpty() || !dstText.IsEmpty())) {
-            Move(hit);
+            Move();
         }
     }
 
@@ -161,18 +158,15 @@ sealed class SensedPhrase: MonoBehaviour {
             Print("");
         }
 
+        // TODO: consider swapping order w/ the previous condition
         if (m_Accepted.Phrase == null) {
             return;
         }
 
         if (m_Volume != 0f) {
             m_Volume = 0f;
-            Tag.Audio.I($"{m_Name} - \"{m_Accepted.Phrase?.Text}\" - stop");
+            Tag.Audio.I($"{m_Name} - \"{m_Accepted.Phrase.Text}\" - stop");
         }
-
-        // break link between previously sensed phrase
-        m_Accepted.Phrase.Reset();
-        m_Accepted.Phrase = null;
     }
 
     /// expect the text to appear
@@ -184,15 +178,16 @@ sealed class SensedPhrase: MonoBehaviour {
     }
 
     /// move the label into position
-    void Move(in Hit hit) {
-        var dist = m_DistRange.Unlerp(hit.Distance);
+    void Move() {
+        // TODO: should this just rely on accepted & not accept hit?
+        var dist = m_DistRange.Unlerp(m_Accepted.Distance);
 
         // move alpha
         m_Label.alpha = m_AlphaByDist.Evaluate(dist);
 
         // move position
         var rad = m_RadiusByDist.Evaluate(dist);
-        var dst = rad * hit.Direction;
+        var dst = rad * m_Accepted.Direction;
 
         if (m_Move.Dst != dst) {
             var src = m_Label.rectTransform.anchoredPosition;
@@ -210,6 +205,18 @@ sealed class SensedPhrase: MonoBehaviour {
     // -- c/print
     /// start printing the text
     void Print(string text) {
+        // don't switch state when printing the same text
+        if (m_DstText == text) {
+            // unless we're gonna restart printing on text we're deleting
+            // TODO: does this need to start the print timer again? e.g. bottom of this method
+            if (m_State == PrintingState.Delete) {
+                SwitchToWrite();
+            }
+
+            return;
+        }
+
+        // otherwise, update the text
         m_DstText = text;
 
         // and switch to the initial state
@@ -250,7 +257,16 @@ sealed class SensedPhrase: MonoBehaviour {
         SwitchTo(PrintingState.Delete);
 
         // start audio fade out
-        m_Fade.Start(duration: m_Print.Duration * m_Label.text.Length);
+        // TODO: this needs to consider current fade as well
+        var len = 0;
+        if (m_Accepted.Phrase) {
+            len = m_Accepted.Phrase.Text.Length;
+        }
+
+        m_Fade.Start(
+            pct: 1f - m_Fade.Pct,
+            duration: m_Print.Duration * len
+        );
     }
 
     /// delete a character and switch state once empty
@@ -263,10 +279,19 @@ sealed class SensedPhrase: MonoBehaviour {
         // switch to the next state once empty
         switch (next.Length, m_DstText.Length) {
         case (0, 0):
-            SwitchToNone(); break;
+            FinishDelete(); break;
         case (0, _):
             SwitchToWrite(); break;
         }
+    }
+
+    /// finish deleting the phrase
+    void FinishDelete() {
+        SwitchToNone();
+
+        // break link between previously sensed phrase
+        m_Accepted.Phrase.Reset();
+        m_Accepted.Phrase = null;
     }
 
     // -- c/write
@@ -281,7 +306,16 @@ sealed class SensedPhrase: MonoBehaviour {
         m_NextMovePct = 1f;
 
         // start audio fade in
-        m_Fade.Start(duration: m_Print.Duration * m_DstText.Length);
+        var len = 0;
+        if (m_Accepted.Phrase) {
+            len = m_Accepted.Phrase.Text.Length;
+        }
+
+        Tag.Audio.I($"{m_Name} - \"{m_DstText}\" (\"{m_Label.text}\") fade in from {m_Fade.Pct} dur {m_Print.Duration * m_DstText.Length}");
+        m_Fade.Start(
+            pct: 1f - m_Fade.Pct,
+            duration: m_Print.Duration * m_DstText.Length
+        );
     }
 
     /// write a character and stop once at target
@@ -315,7 +349,7 @@ sealed class SensedPhrase: MonoBehaviour {
     }
 
     // -- audio --
-    const float k_2pi = 2f * Mathf.PI;
+    const float k_2PI = 2f * Mathf.PI;
 
     /// the name of the go
     string m_Name;
@@ -330,6 +364,9 @@ sealed class SensedPhrase: MonoBehaviour {
     bool m_IsAudioActive = false;
 
     // -- a/debug
+    /// the current fade pct
+    float m_FadePct = 0f;
+
     /// the current volume
     float m_Volume = 0f;
 
@@ -373,10 +410,11 @@ sealed class SensedPhrase: MonoBehaviour {
         var pitch = 440 + m_PitchByDir.Evaluate(dirDotUp);
         var balance = m_BalanceByDir.Evaluate(dirDotRight);
 
-        if (volume != m_Volume || pitch != m_Pitch || balance != m_Balance) {
-            Tag.Audio.I($"{m_Name} - \"{m_Accepted.Phrase?.Text}\" - play {volume} {pitch} {balance}");
+        if (volume != m_Volume || pitch != m_Pitch || balance != m_Balance || fade != m_FadePct) {
+            Tag.Audio.I($"{m_Name} - \"{m_Accepted.Phrase?.Text}\" - play v {volume} p {pitch} b {balance} f {fade} ({m_FadePct})");
         }
 
+        m_FadePct = fade;
         m_Volume = volume;
         m_Pitch = pitch;
         m_Balance = balance;
@@ -387,7 +425,7 @@ sealed class SensedPhrase: MonoBehaviour {
         }
 
         // generate audio
-        var delta = pitch * k_2pi / m_SampleRate;
+        var delta = pitch * k_2PI / m_SampleRate;
         for (var i = 0; i < data.Length; i += channels) {
             m_Phase += delta;
 
@@ -396,7 +434,7 @@ sealed class SensedPhrase: MonoBehaviour {
                 data[i + c] = sample;
             }
 
-            if (m_Phase > k_2pi) {
+            if (m_Phase > k_2PI) {
                 m_Phase = 0;
             }
         }
