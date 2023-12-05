@@ -151,22 +151,31 @@ sealed class SensedPhrase: MonoBehaviour {
         }
     }
 
+    /// update a phrase no longer in sense range but that hasn't vanished yet
+    public void Linger(in Hit hit) {
+        Tag.Sense.I($"\"{m_Accepted.Phrase.Text}\" dist {m_Accepted.Distance} -> {hit.Distance}");
+        m_Accepted.Distance = hit.Distance;
+        m_Accepted.Direction = hit.Direction;
+        Move();
+    }
+
     /// reset the sensed phrase
     public void Reset() {
-        // if there is text to reset, reset it
-        if (!m_DstText.IsEmpty()) {
-            Print("");
-        }
-
-        // TODO: consider swapping order w/ the previous condition
+        // if we have no phrase, there's nothing to reset
         if (m_Accepted.Phrase == null) {
             return;
         }
 
-        if (m_Volume != 0f) {
-            m_Volume = 0f;
-            Tag.Audio.I($"{m_Name} - \"{m_Accepted.Phrase.Text}\" - stop");
+        // if there is text to delete, delete it
+        if (!m_DstText.IsEmpty()) {
+            Print("");
         }
+
+        // // TODO: this is for debugging and should be deleted
+        // if (m_Volume != 0f) {
+        //     m_Volume = 0f;
+        //     Tag.Audio.I($"{m_Name} - \"{m_Accepted.Phrase.Text}\" - stop");
+        // }
     }
 
     /// expect the text to appear
@@ -179,7 +188,6 @@ sealed class SensedPhrase: MonoBehaviour {
 
     /// move the label into position
     void Move() {
-        // TODO: should this just rely on accepted & not accept hit?
         var dist = m_DistRange.Unlerp(m_Accepted.Distance);
 
         // move alpha
@@ -311,7 +319,6 @@ sealed class SensedPhrase: MonoBehaviour {
             len = m_Accepted.Phrase.Text.Length;
         }
 
-        Tag.Audio.I($"{m_Name} - \"{m_DstText}\" (\"{m_Label.text}\") fade in from {m_Fade.Pct} dur {m_Print.Duration * m_DstText.Length}");
         m_Fade.Start(
             pct: 1f - m_Fade.Pct,
             duration: m_Print.Duration * m_DstText.Length
@@ -410,9 +417,9 @@ sealed class SensedPhrase: MonoBehaviour {
         var pitch = 440 + m_PitchByDir.Evaluate(dirDotUp);
         var balance = m_BalanceByDir.Evaluate(dirDotRight);
 
-        if (volume != m_Volume || pitch != m_Pitch || balance != m_Balance || fade != m_FadePct) {
-            Tag.Audio.I($"{m_Name} - \"{m_Accepted.Phrase?.Text}\" - play v {volume} p {pitch} b {balance} f {fade} ({m_FadePct})");
-        }
+        // if (volume != m_Volume || pitch != m_Pitch || balance != m_Balance || fade != m_FadePct) {
+        //     Tag.Audio.I($"{m_Name} - \"{m_Accepted.Phrase?.Text}\" - play v {volume} p {pitch} b {balance} f {fade} ({m_FadePct})");
+        // }
 
         m_FadePct = fade;
         m_Volume = volume;
@@ -452,6 +459,11 @@ sealed class SensedPhrase: MonoBehaviour {
     /// if this is accepting a phrase
     public bool IsAccepting {
         get => m_IsAccepting;
+    }
+
+    /// the phrase out of normal sense range, if any
+    public Phrase OutOfRangePhrase {
+        get => m_State == PrintingState.Delete ? m_Accepted.Phrase : null;
     }
 }
 

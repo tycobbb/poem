@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Poem {
 
 /// the poetry currently sensed by the player
-class Sensed: MonoBehaviour {
+sealed class Sensed: MonoBehaviour {
     // -- refs --
     [Header("refs")]
     [Tooltip("the parent for spawned phrases")]
@@ -44,8 +44,8 @@ class Sensed: MonoBehaviour {
     }
 
     // -- commands --
-    /// show the first n phrases from the hits
-    public void Accept(int count, RaycastHit[] hits, Ray sense) {
+    /// show all the hit phrases
+    public void Accept(int count, RaycastHit[] hits, Ray cast) {
         // clear senses
         m_Nearest = null;
         for (var i = 0 ; i < m_Phrases.Length; i++) {
@@ -53,7 +53,7 @@ class Sensed: MonoBehaviour {
         }
 
         // sort hits by distance
-        Array.Sort<RaycastHit>(hits, 0, count, new CompareByDistance());
+        Array.Sort(hits, 0, count, new CompareByDistance());
 
         // share storage for the hit
         var args = new SensedPhrase.Hit();
@@ -81,8 +81,8 @@ class Sensed: MonoBehaviour {
             args.Phrase = phrase;
             args.Distance = hit.distance;
             args.Direction = Vector3.ProjectOnPlane(
-                Vector3.Normalize(t.position - sense.origin),
-                sense.direction
+                Vector3.Normalize(t.position - cast.origin),
+                cast.direction
             );
 
             // maintain the existing sensor, if any
@@ -103,11 +103,31 @@ class Sensed: MonoBehaviour {
             }
         }
 
-        // reset any remaining free sensors
+        // process any remaining sensors
         for (; j < m_Phrases.Length; j++) {
             var sensed = m_Phrases[j];
-            if (!sensed.IsAccepting) {
+            if (sensed.IsAccepting) {
+                continue;
+            }
+
+            // if there's no phrase to update on sensed phrase, reset
+            var phrase = sensed.OutOfRangePhrase;
+            if (phrase == null) {
                 sensed.Reset();
+            }
+            // otherwise, something is no longer in cast range, but move it according to current state
+            else {
+                args.Phrase = phrase;
+                args.Distance = Vector3.Distance(
+                    cast.origin,
+                    phrase.ClosestPoint(cast.origin)
+                );
+                args.Direction = Vector3.ProjectOnPlane(
+                    Vector3.Normalize(phrase.transform.position - cast.origin),
+                    cast.direction
+                );
+
+                sensed.Linger(args);
             }
         }
     }

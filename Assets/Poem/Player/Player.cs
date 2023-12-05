@@ -67,17 +67,18 @@ sealed class Player: MonoBehaviour {
     }
 
     void Update() {
-        var sense = SenseRay();
+        var cast = SenseCast();
 
         // sense range & radius; increases as you look up
-        var upness = Mathf.Max(Vector3.Dot(sense.direction, Vector3.up), 0f);
-        var range = m_SenseRange.Evaluate(upness);
-        var radius = m_SenseRadius.Evaluate(upness);
+        var dirDotUp = Mathf.Max(Vector3.Dot(cast.direction, Vector3.up), 0f);
+        var range = m_SenseRange.Evaluate(dirDotUp);
+        var radius = m_SenseRadius.Evaluate(dirDotUp);
 
         // cast for phrases
         var count = Physics.SphereCastNonAlloc(
-            sense,
+            cast.origin,
             radius,
+            cast.direction,
             m_Hits,
             range,
             s_PoemMask,
@@ -85,7 +86,7 @@ sealed class Player: MonoBehaviour {
         );
 
         // and show them
-        m_Sensed.Accept(count, m_Hits, sense);
+        m_Sensed.Accept(count, m_Hits, cast);
     }
 
     void FixedUpdate() {
@@ -128,7 +129,7 @@ sealed class Player: MonoBehaviour {
 
     // -- queries --
     /// the ray for the sense cast
-    Ray SenseRay() {
+    Ray SenseCast() {
         return m_Sensor.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
     }
 
@@ -160,7 +161,7 @@ sealed class Player: MonoBehaviour {
     #if UNITY_EDITOR
     /// -- d/gizmos
     void OnDrawGizmos() {
-        var ray = SenseRay();
+        var ray = SenseCast();
         var src = ray.origin;
         var dst = ray.GetPoint(2f);
 

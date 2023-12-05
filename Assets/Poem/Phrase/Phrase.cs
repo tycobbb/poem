@@ -25,10 +25,14 @@ sealed class Phrase: MonoBehaviour {
     /// the current sensor of this phrase, if any
     SensedPhrase m_Accepted;
 
+    /// the attached collider
+    Collider m_Collider;
+
     // -- lifecycle --
     void Awake() {
         // bind events
         m_Store.OnLoad(OnStoreLoad);
+        m_Collider = GetComponent<Collider>();
     }
 
     // -- commands --
@@ -87,6 +91,11 @@ sealed class Phrase: MonoBehaviour {
     /// the current sensor of this phrase, if any
     public SensedPhrase Sensed {
         get => m_Accepted;
+    }
+
+    /// the closes point on the phrase collider
+    public Vector3 ClosestPoint(Vector3 src) {
+        return m_Collider.ClosestPoint(src);
     }
 
     // -- events --
