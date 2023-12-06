@@ -44,7 +44,7 @@ sealed class Player: MonoBehaviour {
     /// a buffer for phrase raycast hits
     RaycastHit[] m_Hits;
 
-    /// the movement action amap
+    /// the movement action map
     InputActionMap m_Movement;
 
     /// .

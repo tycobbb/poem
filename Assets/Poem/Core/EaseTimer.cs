@@ -37,12 +37,12 @@ public record EaseTimer {
 
     // -- commands --
     /// start the timer (optionally, at a particular raw percent)
-    public void Start(float pct = 0f, float duration = -1f) {
-        if (duration != -1f) {
-            m_Duration = duration;
+    public void Start(float raw = 0f, float dur = -1f) {
+        if (dur != -1f) {
+            m_Duration = dur;
         }
 
-        m_Elapsed = pct * m_Duration;
+        m_Elapsed = raw * m_Duration;
     }
 
     /// advance the timer based on current time

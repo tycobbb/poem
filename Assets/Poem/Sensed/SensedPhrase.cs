@@ -221,12 +221,14 @@ sealed class SensedPhrase: MonoBehaviour {
     // -- c/print
     /// start printing the text
     void Print(string text) {
+        var curr = m_Label.text;
+
         // don't switch state when printing the same text
         if (m_DstText == text) {
             // unless we're gonna restart printing on text we're deleting
             // TODO: does this need to start the print timer again? e.g. bottom of this method
-            if (m_State == PrintingState.Delete) {
-                SwitchToWrite();
+            if (m_State == PrintingState.Delete && text != "" && curr != text) {
+                SwitchToWrite(shouldResume: true);
             }
 
             return;
@@ -236,7 +238,7 @@ sealed class SensedPhrase: MonoBehaviour {
         m_DstText = text;
 
         // and switch to the initial state
-        switch (m_Label.text.Length, m_DstText.Length) {
+        switch (curr.Length, m_DstText.Length) {
         case (0, 0):
             SwitchToNone(); break;
         case (0, _):
@@ -279,9 +281,12 @@ sealed class SensedPhrase: MonoBehaviour {
             len = m_Accepted.Phrase.Text.Length;
         }
 
+        Tag.Sense.I($"fade out {m_Fade.Raw} -> {1f - m_Fade.Raw}");
+        var pct = 1f - m_Fade.Raw;
         m_Fade.Start(
-            pct: 1f - m_Fade.Pct,
-            duration: m_Print.Duration * len
+            raw: pct,
+            // dur: m_Print.Duration * len
+            dur: pct == 0f ? m_Fade.Duration : m_Print.Duration * len
         );
     }
 
@@ -312,24 +317,24 @@ sealed class SensedPhrase: MonoBehaviour {
 
     // -- c/write
     /// start writing the target phrase
-    void SwitchToWrite() {
+    void SwitchToWrite(bool shouldResume = false) {
         SwitchTo(PrintingState.Write);
 
         // resize the label to fit the new phrase
         Resize();
 
-        // snap to the initial move position
-        m_NextMovePct = 1f;
-
-        // start audio fade in
-        var len = 0;
-        if (m_Accepted.Phrase) {
-            len = m_Accepted.Phrase.Text.Length;
+        // snap to the initial move position when not resuming from delete
+        if (!shouldResume) {
+            m_NextMovePct = 1f;
         }
 
+        // start audio fade in
+        Tag.Sense.I($"fade inn {m_Fade.Raw} -> {1f - m_Fade.Raw}");
+        var len = m_DstText.Length;
+        var pct = 1f - m_Fade.Raw;
         m_Fade.Start(
-            pct: 1f - m_Fade.Pct,
-            duration: m_Print.Duration * m_DstText.Length
+            raw: pct,
+            dur: pct == 0f ? m_Fade.Duration : m_Print.Duration * len
         );
     }
 
@@ -337,7 +342,7 @@ sealed class SensedPhrase: MonoBehaviour {
     void WriteOne() {
         // write one character
         var curr = m_Label.text;
-        var next = m_DstText.Substring(0, curr.Length + 1);
+        var next = m_DstText[..(curr.Length + 1)];
         m_Label.text = next;
 
         // stop printing once at target
