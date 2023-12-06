@@ -13,10 +13,19 @@ sealed class SensedPhrase: MonoBehaviour {
     }
 
     /// a hit phrase
-    public struct Hit {
+    public record Hit {
         /// .
         public Phrase Phrase;
 
+        /// the last hit point
+        public Vector3 Point;
+
+        /// the current hit offset
+        public HitOffset Offset;
+    }
+
+    /// a hit offset
+    public struct HitOffset {
         /// .
         public float Distance;
 
@@ -75,13 +84,13 @@ sealed class SensedPhrase: MonoBehaviour {
     PrintingState m_State = PrintingState.None;
 
     /// if this is accepting a phrase
-    bool m_IsAccepting = false;
+    bool m_IsAccepting;
 
     /// the accepted phrase
-    Hit m_Accepted;
+    Hit m_Accepted = new();
 
     /// the pct to start the next move from
-    float m_NextMovePct = 0f;
+    float m_NextMovePct;
 
     // -- lifecycle --
     void Awake() {
@@ -121,7 +130,7 @@ sealed class SensedPhrase: MonoBehaviour {
     }
 
     /// accept and sense a phrase
-    public void Accept(in Hit hit) {
+    public void Accept(Hit hit) {
         m_IsAccepting = true;
 
         // accept new link to phrase if changed
@@ -133,8 +142,8 @@ sealed class SensedPhrase: MonoBehaviour {
         }
 
         // update relative position of accepted phrase
-        m_Accepted.Distance = hit.Distance;
-        m_Accepted.Direction = hit.Direction;
+        m_Accepted.Point = hit.Point;
+        m_Accepted.Offset = hit.Offset;
 
         // show the text; print by character if not expecting
         var dstText = phrase.Text;
@@ -152,10 +161,8 @@ sealed class SensedPhrase: MonoBehaviour {
     }
 
     /// update a phrase no longer in sense range but that hasn't vanished yet
-    public void Linger(in Hit hit) {
-        Tag.Sense.I($"\"{m_Accepted.Phrase.Text}\" dist {m_Accepted.Distance} -> {hit.Distance}");
-        m_Accepted.Distance = hit.Distance;
-        m_Accepted.Direction = hit.Direction;
+    public void Linger(in HitOffset offset) {
+        m_Accepted.Offset = offset;
         Move();
     }
 
@@ -188,14 +195,15 @@ sealed class SensedPhrase: MonoBehaviour {
 
     /// move the label into position
     void Move() {
-        var dist = m_DistRange.Unlerp(m_Accepted.Distance);
+        var offset = m_Accepted.Offset;
+        var dist = m_DistRange.Unlerp(offset.Distance);
 
         // move alpha
         m_Label.alpha = m_AlphaByDist.Evaluate(dist);
 
         // move position
         var rad = m_RadiusByDist.Evaluate(dist);
-        var dst = rad * m_Accepted.Direction;
+        var dst = rad * offset.Direction;
 
         if (m_Move.Dst != dst) {
             var src = m_Label.rectTransform.anchoredPosition;
@@ -365,23 +373,23 @@ sealed class SensedPhrase: MonoBehaviour {
     int m_SampleRate;
 
     /// the audio wave phase
-    double m_Phase = 0;
+    double m_Phase;
 
     /// if audio is currently active
-    bool m_IsAudioActive = false;
+    bool m_IsAudioActive;
 
     // -- a/debug
     /// the current fade pct
-    float m_FadePct = 0f;
+    float m_FadePct;
 
     /// the current volume
-    float m_Volume = 0f;
+    float m_Volume;
 
     /// the current pitch
-    float m_Pitch = 0f;
+    float m_Pitch;
 
     /// the current balance
-    float m_Balance = 0f;
+    float m_Balance;
 
     // -- a/commands --
     /// .
@@ -403,9 +411,10 @@ sealed class SensedPhrase: MonoBehaviour {
         }
 
         // precalculate inputs
-        var dist = m_DistRange.Unlerp(m_Accepted.Distance);
-        var dirDotUp = Vector2.Dot(m_Accepted.Direction, Vector2.up);
-        var dirDotRight = Vector2.Dot(m_Accepted.Direction, Vector2.right);
+        var offset = m_Accepted.Offset;
+        var dist = m_DistRange.Unlerp(offset.Distance);
+        var dirDotUp = Vector2.Dot(offset.Direction, Vector2.up);
+        var dirDotRight = Vector2.Dot(offset.Direction, Vector2.right);
 
         // sample props
         var fade = m_Fade.Pct;
@@ -461,9 +470,9 @@ sealed class SensedPhrase: MonoBehaviour {
         get => m_IsAccepting;
     }
 
-    /// the phrase out of normal sense range, if any
-    public Phrase OutOfRangePhrase {
-        get => m_State == PrintingState.Delete ? m_Accepted.Phrase : null;
+    /// the hit out of normal sense range, if any
+    public Hit OutOfRangeHit {
+        get => m_State == PrintingState.Delete ? m_Accepted : null;
     }
 }
 

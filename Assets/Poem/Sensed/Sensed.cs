@@ -6,6 +6,10 @@ namespace Poem {
 
 /// the poetry currently sensed by the player
 sealed class Sensed: MonoBehaviour {
+    // -- constants --
+    /// the layer for targeting a lingering phrase
+    static int s_TargetLayer = -1;
+
     // -- refs --
     [Header("refs")]
     [Tooltip("the parent for spawned phrases")]
@@ -26,6 +30,12 @@ sealed class Sensed: MonoBehaviour {
 
     // -- lifecycle --
     void Awake() {
+        // set statics
+        if (s_TargetLayer == -1) {
+            s_TargetLayer = LayerMask.NameToLayer("Target");
+            Debug.Log($"target layer {s_TargetLayer}");
+        }
+
         // create phrases
         m_Phrases = new SensedPhrase[m_Config.Phrases];
 
@@ -78,12 +88,15 @@ sealed class Sensed: MonoBehaviour {
             }
 
             // set the hit props
-            args.Phrase = phrase;
-            args.Distance = hit.distance;
-            args.Direction = Vector3.ProjectOnPlane(
+            var dir = Vector3.ProjectOnPlane(
                 Vector3.Normalize(t.position - cast.origin),
                 cast.direction
             );
+
+            args.Phrase = phrase;
+            args.Point = hit.point;
+            args.Offset.Distance = hit.distance;
+            args.Offset.Direction = dir;
 
             // maintain the existing sensor, if any
             if (phrase.Sensed != null) {
@@ -111,23 +124,26 @@ sealed class Sensed: MonoBehaviour {
             }
 
             // if there's no phrase to update on sensed phrase, reset
-            var phrase = sensed.OutOfRangePhrase;
-            if (phrase == null) {
+            var prevHit = sensed.OutOfRangeHit;
+            if (prevHit == null) {
                 sensed.Reset();
             }
             // otherwise, something is no longer in cast range, but move it according to current state
             else {
-                args.Phrase = phrase;
-                args.Distance = Vector3.Distance(
-                    cast.origin,
-                    phrase.ClosestPoint(cast.origin)
+                var dst = Vector3.Distance(
+                    prevHit.Point,
+                    cast.origin
                 );
-                args.Direction = Vector3.ProjectOnPlane(
-                    Vector3.Normalize(phrase.transform.position - cast.origin),
+
+                var dir = Vector3.ProjectOnPlane(
+                    Vector3.Normalize(prevHit.Phrase.transform.position - cast.origin),
                     cast.direction
                 );
 
-                sensed.Linger(args);
+                args.Offset.Distance = dst;
+                args.Offset.Direction = dir;
+
+                sensed.Linger(args.Offset);
             }
         }
     }
