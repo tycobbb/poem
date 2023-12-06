@@ -6,10 +6,6 @@ namespace Poem {
 
 /// the poetry currently sensed by the player
 sealed class Sensed: MonoBehaviour {
-    // -- constants --
-    /// the layer for targeting a lingering phrase
-    static int s_TargetLayer = -1;
-
     // -- refs --
     [Header("refs")]
     [Tooltip("the parent for spawned phrases")]
@@ -30,12 +26,6 @@ sealed class Sensed: MonoBehaviour {
 
     // -- lifecycle --
     void Awake() {
-        // set statics
-        if (s_TargetLayer == -1) {
-            s_TargetLayer = LayerMask.NameToLayer("Target");
-            Debug.Log($"target layer {s_TargetLayer}");
-        }
-
         // create phrases
         m_Phrases = new SensedPhrase[m_Config.Phrases];
 
